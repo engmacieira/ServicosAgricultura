@@ -51,41 +51,60 @@ export function inicializar(externalHandlers) {
 export function desenharListaServicos(servicos) {
     if (!listaServicos) {
         console.error("ServicoUI: Elemento 'lista-servicos' não encontrado para desenhar.");
-        return; // Proteção
+        return; 
     }
     listaServicos.innerHTML = '';
-    if (!servicos || servicos.length === 0) { listaServicos.innerHTML = '<li>Nenhum serviço cadastrado.</li>'; return; }
+    
+    if (!servicos || servicos.length === 0) { 
+        listaServicos.innerHTML = '<li style="justify-content: center; background-color: var(--color-light-bg);">Nenhum serviço cadastrado.</li>'; 
+        return; 
+    }
+    
     servicos.forEach(servico => {
         const item = document.createElement('li');
-        item.textContent = `[${servico.id}] ${servico.nome} (R$ ${servico.valor_unitario.toFixed(2)})`;
+        
+        // --- 1. Container de Informação (List Item Info) ---
+        const infoContainer = document.createElement('div');
+        infoContainer.classList.add('list-item-info');
+        
+        // Nome Principal
+        const mainInfo = document.createElement('div');
+        mainInfo.classList.add('list-item-main');
+        mainInfo.textContent = servico.nome; // Nome como título principal
+
+        // Informações Secundárias (Valor Unitário)
+        const secondaryInfo = document.createElement('div');
+        secondaryInfo.classList.add('list-item-secondary');
+        secondaryInfo.innerHTML = `
+            Valor Unitário: <strong>R$ ${servico.valor_unitario.toFixed(2)}</strong>
+            <span style="margin-left: 10px;">(ID: ${servico.id})</span>
+        `;
+
+        infoContainer.appendChild(mainInfo);
+        infoContainer.appendChild(secondaryInfo);
+
+        // --- 2. Container de Ações (Buttons) ---
+        const actionsContainer = document.createElement('div');
+        actionsContainer.classList.add('list-item-actions');
+
+        // Botão Editar
         const btnEditar = document.createElement('button');
-        btnEditar.textContent = 'Editar'; btnEditar.style.marginLeft = '10px';
+        btnEditar.textContent = 'Editar'; 
+        btnEditar.classList.add('btn-secondary', 'btn-action');
         btnEditar.onclick = () => handlers.onEditServico(servico); // Chama handler do renderer
+
+        // Botão Excluir
         const btnExcluir = document.createElement('button');
-        btnExcluir.textContent = 'Excluir'; btnExcluir.style.marginLeft = '5px';
+        btnExcluir.textContent = 'Excluir'; 
+        btnExcluir.classList.add('btn-delete', 'btn-action');
         btnExcluir.onclick = () => handlers.onDeleteServico(servico.id); // Chama handler do renderer
-        item.appendChild(btnEditar); item.appendChild(btnExcluir);
+
+        actionsContainer.appendChild(btnEditar);
+        actionsContainer.appendChild(btnExcluir);
+        
+        // --- 3. Montagem Final do Item ---
+        item.appendChild(infoContainer);
+        item.appendChild(actionsContainer);
         listaServicos.appendChild(item);
     });
-}
-export function limparFormularioServico() {
-    if (!servicoForm) return;
-    servicoIdInput.value = ''; servicoNomeInput.value = ''; servicoValorInput.value = '';
-    servicoNomeInput.focus();
-}
-export function preencherFormularioServico(servico) {
-    if (!servicoForm) return;
-    servicoIdInput.value = servico.id; servicoNomeInput.value = servico.nome;
-    servicoValorInput.value = servico.valor_unitario;
-    servicoNomeInput.focus();
-}
-export function coletarDadosServico() {
-    if (!servicoForm) return null;
-    return {
-        nome: servicoNomeInput.value,
-        valor_unitario: parseFloat(servicoValorInput.value) || 0.0
-    };
-}
-export function getIdServico() {
-    return servicoIdInput ? servicoIdInput.value || null : null;
 }

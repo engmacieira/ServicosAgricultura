@@ -51,43 +51,60 @@ export function inicializar(externalHandlers) {
 export function desenharListaProdutores(produtores) {
     if (!listaProdutores) return; // Proteção
     listaProdutores.innerHTML = '';
-    if (!produtores || produtores.length === 0) { listaProdutores.innerHTML = '<li>Nenhum produtor cadastrado.</li>'; return; }
+    
+    if (!produtores || produtores.length === 0) { 
+        // Adapta o item vazio para o novo estilo de lista
+        listaProdutores.innerHTML = '<li style="justify-content: center; background-color: var(--color-light-bg);">Nenhum produtor cadastrado.</li>'; 
+        return; 
+    }
+    
     produtores.forEach(produtor => {
         const item = document.createElement('li');
-        item.textContent = `[${produtor.id}] ${produtor.nome} (Região: ${produtor.regiao || 'N/A'})`;
+        
+        // --- 1. Container de Informação (List Item Info) ---
+        const infoContainer = document.createElement('div');
+        infoContainer.classList.add('list-item-info');
+        
+        // Nome Principal
+        const mainInfo = document.createElement('div');
+        mainInfo.classList.add('list-item-main');
+        mainInfo.textContent = produtor.nome; // Nome como título principal
+
+        // Informações Secundárias (CPF e Região)
+        const secondaryInfo = document.createElement('div');
+        secondaryInfo.classList.add('list-item-secondary');
+        secondaryInfo.innerHTML = `
+            CPF: ${produtor.cpf || 'N/A'} 
+            | Região: ${produtor.regiao || 'N/A'}
+            | Telefone: ${produtor.telefone || 'N/A'}
+            <span style="margin-left: 10px;">(ID: ${produtor.id})</span>
+        `;
+
+        infoContainer.appendChild(mainInfo);
+        infoContainer.appendChild(secondaryInfo);
+
+        // --- 2. Container de Ações (Buttons) ---
+        const actionsContainer = document.createElement('div');
+        actionsContainer.classList.add('list-item-actions');
+
+        // Botão Editar
         const btnEditar = document.createElement('button');
-        btnEditar.textContent = 'Editar'; btnEditar.style.marginLeft = '10px';
-        // Usa o handler passado pelo renderer
-        btnEditar.onclick = () => handlers.onEditProdutor(produtor);
+        btnEditar.textContent = 'Editar'; 
+        btnEditar.classList.add('btn-secondary', 'btn-action');
+        btnEditar.onclick = () => handlers.onEditProdutor(produtor); 
+
+        // Botão Excluir
         const btnExcluir = document.createElement('button');
-        btnExcluir.textContent = 'Excluir'; btnExcluir.style.marginLeft = '5px';
-        // Usa o handler passado pelo renderer
+        btnExcluir.textContent = 'Excluir'; 
+        btnExcluir.classList.add('btn-delete', 'btn-action');
         btnExcluir.onclick = () => handlers.onDeleteProdutor(produtor.id);
-        item.appendChild(btnEditar); item.appendChild(btnExcluir);
+
+        actionsContainer.appendChild(btnEditar);
+        actionsContainer.appendChild(btnExcluir);
+        
+        // --- 3. Montagem Final do Item ---
+        item.appendChild(infoContainer);
+        item.appendChild(actionsContainer);
         listaProdutores.appendChild(item);
     });
-}
-export function limparFormularioProdutor() {
-    if (!produtorForm) return;
-    produtorIdInput.value = ''; produtorNomeInput.value = ''; produtorCpfInput.value = '';
-    produtorRegiaoInput.value = ''; produtorReferenciaInput.value = ''; produtorTelefoneInput.value = '';
-    produtorNomeInput.focus();
-}
-export function preencherFormularioProdutor(produtor) {
-     if (!produtorForm) return;
-    produtorIdInput.value = produtor.id; produtorNomeInput.value = produtor.nome;
-    produtorCpfInput.value = produtor.cpf; produtorRegiaoInput.value = produtor.regiao;
-    produtorReferenciaInput.value = produtor.referencia; produtorTelefoneInput.value = produtor.telefone;
-    produtorNomeInput.focus();
-}
-export function coletarDadosProdutor() {
-     if (!produtorForm) return null;
-    return {
-        nome: produtorNomeInput.value, cpf: produtorCpfInput.value || null,
-        regiao: produtorRegiaoInput.value || null, referencia: produtorReferenciaInput.value || null,
-        telefone: produtorTelefoneInput.value || null
-    };
-}
-export function getIdProdutor() {
-    return produtorIdInput ? produtorIdInput.value || null : null;
 }
