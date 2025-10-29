@@ -55,19 +55,171 @@
     <main class="tab-content">
 
         <div id="painel-produtores" class="tab-pane active">
-             </div>
+            <h2>Cadastro de Produtores</h2>
+            <div class="page-layout">
+                <div class="coluna-formulario">
+                    <form id="produtor-form">
+                        <input type="hidden" id="produtor-id">
+                        <div>
+                            <label for="produtor-nome">Nome (*):</label>
+                            <input type="text" id="produtor-nome" required>
+                        </div>
+                        <div>
+                            <label for="produtor-cpf">CPF:</label>
+                            <input type="text" id="produtor-cpf">
+                        </div>
+                        <div>
+                            <label for="produtor-regiao">Região:</label>
+                            <input type="text" id="produtor-regiao">
+                        </div>
+                        <div>
+                            <label for="produtor-referencia">Referência:</label>
+                            <input type="text" id="produtor-referencia">
+                        </div>
+                        <div>
+                            <label for="produtor-telefone">Telefone:</label>
+                            <input type="text" id="produtor-telefone">
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit">Salvar Produtor</button>
+                            <button type="button" id="produtor-btn-limpar">Limpar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="coluna-lista">
+                    <h3>Produtores Cadastrados</h3>
+                    <ul id="lista-produtores">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
         <div id="painel-servicos" class="tab-pane">
+            <h2>Cadastro de Serviços</h2>
+            <div class="page-layout">
+                <div class="coluna-formulario">
+                    <form id="servico-form">
+                        <input type="hidden" id="servico-id">
+                        <div>
+                            <label for="servico-nome">Nome (*):</label>
+                            <input type="text" id="servico-nome" required>
+                        </div>
+                        <div>
+                            <label for="servico-valor">Valor Unit. (*):</label>
+                            <input type="number" id="servico-valor" step="0.01" min="0" value="0.00" required>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit">Salvar Serviço</button>
+                            <button type="button" id="servico-btn-limpar">Limpar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="coluna-lista">
+                    <h3>Serviços Cadastrados</h3>
+                    <ul id="lista-servicos">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
             </div>
+        </div>
 
         <div id="painel-agendamento" class="tab-pane">
+            <h2>Registro de Execução de Serviço</h2>
+            <div class="page-layout">
+                <div class="coluna-formulario" style="min-width: 500px;">
+                    <form id="agendamento-form">
+                        <input type="hidden" id="agendamento-id">
+                        <div>
+                            <label for="agendamento-produtor">Produtor (*):</label>
+                            <select id="agendamento-produtor" required>
+                                <option value="">Carregando Produtores...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="agendamento-servico">Serviço (*):</label>
+                            <select id="agendamento-servico" required>
+                                <option value="">Carregando Serviços...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="agendamento-data">Data (*):</label>
+                            <input type="date" id="agendamento-data" required>
+                        </div>
+                        <div>
+                            <label for="agendamento-horas">Horas Prestadas:</label>
+                            <input type="number" id="agendamento-horas" step="0.1" min="0" value="0.0">
+                        </div>
+                        <div>
+                            <label for="agendamento-valor">Valor Total (R$):</label>
+                            <input type="number" id="agendamento-valor" step="0.01" min="0" value="0.00">
+                        </div>
+                        <div class="form-buttons">
+                            <button type="submit">Salvar Agendamento</button>
+                            <button type="button" id="agendamento-btn-limpar">Limpar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
+        </div>
 
         <div id="painel-historico" class="tab-pane">
-            </div>
+            <h2>Histórico de Execuções</h2>
+            <ul id="lista-historico">
+                <li>Carregando histórico...</li>
+            </ul>
+        </div>
 
         <div id="painel-pagamentos" class="tab-pane">
+            <div id="pagamentos-coluna-selecao">
+                <h2>Registro de Pagamentos</h2>
+                <div>
+                    <label for="pagamentos-select-execucao" style="width: auto;">Agendamento:</label>
+                    <select id="pagamentos-select-execucao" style="width: 100%;">
+                        <option value="">Selecione um Agendamento...</option>
+                    </select>
+                </div>
+
+                <div id="pagamento-form-placeholder">
+                    <p>Selecione um agendamento acima para registrar pagamentos.</p>
+                </div>
+
+                <form id="pagamento-form" style="display: none;">
+                    <h3>Novo Pagamento</h3>
+                    <input type="hidden" id="pagamento-id">
+                    <input type="hidden" id="pagamento-execucao-id">
+                    <div>
+                        <label for="pagamento-valor">Valor Pago (*):</label>
+                        <input type="number" id="pagamento-valor" step="0.01" min="0.01" required>
+                    </div>
+                    <div>
+                        <label for="pagamento-data">Data (*):</label>
+                        <input type="date" id="pagamento-data" required>
+                    </div>
+                    <div class="form-buttons" style="margin-left: 110px;">
+                        <button type="submit">Salvar Pagamento</button>
+                        <button type="button" id="pagamento-btn-limpar">Limpar</button>
+                        <button type="button" id="pagamento-btn-cancelar" style="display: none;">Cancelar Edição</button>
+                    </div>
+                </form>
             </div>
+
+            <div id="pagamentos-coluna-detalhes">
+                <h2>Detalhes e Histórico</h2>
+                <div id="pagamentos-detalhes-execucao" style="display: none;">
+                    <p><strong>Produtor:</strong> <span id="detalhe-produtor-nome">N/A</span></p>
+                    <p><strong>Serviço:</strong> <span id="detalhe-servico-nome">N/A</span></p>
+                    <p><strong>Data da Execução:</strong> <span id="detalhe-data">N/A</span></p>
+                    <p><strong>Valor Total:</strong> R$ <span id="detalhe-valor-total">0.00</span></p>
+                    <p><strong>Total Pago:</strong> R$ <span id="detalhe-total-pago">0.00</span></p>
+                    <p><strong>Saldo Devedor:</strong> R$ <span id="detalhe-saldo-devedor">0.00</span></p>
+                </div>
+                <h3>Pagamentos Registrados</h3>
+                <ul id="lista-pagamentos">
+                    <li>Selecione um agendamento para ver os pagamentos.</li>
+                </ul>
+            </div>
+        </div>
         
         <div id="painel-relatorios" class="tab-pane">
             <h2>Relatório de Dívidas por Produtor</h2>
