@@ -7,7 +7,7 @@ produtor_bp = Blueprint('produtor_bp', __name__)
 
 
 # --- ROTA (GET ALL) ---
-@produtor_bp.route('/api/produtores', methods=['GET'])
+@produtor_bp.route('/produtores', methods=['GET'])
 def get_produtores_api():
     """ Endpoint para LER (GET) todos os produtores """
     produtores = produtor_repository.get_all_produtores()
@@ -15,7 +15,7 @@ def get_produtores_api():
 
 
 # --- ROTA (GET BY ID) ---
-@produtor_bp.route('/api/produtores/<int:produtor_id>', methods=['GET'])
+@produtor_bp.route('/produtores/<int:produtor_id>', methods=['GET'])
 def get_produtor_api(produtor_id):
     """ Endpoint para LER (GET) um produtor específico """
     produtor = produtor_repository.get_produtor_by_id(produtor_id)
@@ -26,7 +26,7 @@ def get_produtor_api(produtor_id):
 
 
 # --- ROTA (CREATE) ---
-@produtor_bp.route('/api/produtores', methods=['POST'])
+@produtor_bp.route('/produtores', methods=['POST'])
 def create_produtor_api():
     """ Endpoint para CRIAR (POST) um novo produtor """
     dados = request.json
@@ -45,7 +45,7 @@ def create_produtor_api():
 
 
 # --- ROTA (UPDATE) ---
-@produtor_bp.route('/api/produtores/<int:produtor_id>', methods=['PUT'])
+@produtor_bp.route('/produtores/<int:produtor_id>', methods=['PUT'])
 def update_produtor_api(produtor_id):
     """ Endpoint para ATUALIZAR (PUT) um produtor existente """
     if not produtor_repository.get_produtor_by_id(produtor_id):
@@ -68,7 +68,7 @@ def update_produtor_api(produtor_id):
 
 
 # --- ROTA (DELETE) ---
-@produtor_bp.route('/api/produtores/<int:produtor_id>', methods=['DELETE'])
+@produtor_bp.route('/produtores/<int:produtor_id>', methods=['DELETE'])
 def delete_produtor_api(produtor_id):
     """ Endpoint para EXCLUIR (DELETE) um produtor """
     if not produtor_repository.get_produtor_by_id(produtor_id):

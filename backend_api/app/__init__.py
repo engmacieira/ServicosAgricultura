@@ -29,11 +29,11 @@ def create_app():
     
     # Mark Construtor: Agora, registramos (plugamos) todos eles na aplicação.
     
-    app.register_blueprint(produtor_bp)   # Rotas /api/produtores
-    app.register_blueprint(servico_bp)    # Rotas /api/servicos
-    app.register_blueprint(execucao_bp)   # Rotas /api/execucoes
-    app.register_blueprint(pagamento_bp)  # Rotas /api/pagamentos e aninhadas
-    app.register_blueprint(relatorio_bp)  # Rotas /api/relatorios (NOVO)
+    app.register_blueprint(produtor_bp, url_prefix='/api')   # Rotas /api/produtores
+    app.register_blueprint(servico_bp, url_prefix='/api')    # Rotas /api/servicos
+    app.register_blueprint(execucao_bp, url_prefix='/api')   # Rotas /api/execucoes
+    app.register_blueprint(pagamento_bp, url_prefix='/api')  # Rotas /api/pagamentos e aninhadas
+    app.register_blueprint(relatorio_bp, url_prefix='/api')  # Rotas /api/relatorios (NOVO)
     
 
     # Rota de verificação de saúde (Health Check)

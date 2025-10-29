@@ -8,7 +8,7 @@ servico_bp = Blueprint('servico_bp', __name__)
 
 
 # --- ROTA DE LEITURA (GET ALL) ---
-@servico_bp.route('/api/servicos', methods=['GET'])
+@servico_bp.route('/servicos', methods=['GET'])
 def get_servicos_api():
     """
     Endpoint para LER (GET) todos os serviços.
@@ -21,7 +21,7 @@ def get_servicos_api():
 
 
 # --- ROTA DE LEITURA (GET BY ID) ---
-@servico_bp.route('/api/servicos/<int:servico_id>', methods=['GET'])
+@servico_bp.route('/servicos/<int:servico_id>', methods=['GET'])
 def get_servico_api(servico_id):
     """
     Endpoint para LER (GET) um serviço específico pelo ID.
@@ -35,7 +35,7 @@ def get_servico_api(servico_id):
 
 
 # --- ROTA DE CRIAÇÃO (POST) ---
-@servico_bp.route('/api/servicos', methods=['POST'])
+@servico_bp.route('/servicos', methods=['POST'])
 def create_servico_api():
     """
     Endpoint para CRIAR (POST) um novo serviço.
@@ -65,7 +65,7 @@ def create_servico_api():
 
 
 # --- ROTA DE ATUALIZAÇÃO (PUT) ---
-@servico_bp.route('/api/servicos/<int:servico_id>', methods=['PUT'])
+@servico_bp.route('/servicos/<int:servico_id>', methods=['PUT'])
 def update_servico_api(servico_id):
     """
     Endpoint para ATUALIZAR (PUT) um serviço existente.
@@ -100,7 +100,7 @@ def update_servico_api(servico_id):
 
 
 # --- ROTA DE EXCLUSÃO (DELETE) ---
-@servico_bp.route('/api/servicos/<int:servico_id>', methods=['DELETE'])
+@servico_bp.route('/servicos/<int:servico_id>', methods=['DELETE'])
 def delete_servico_api(servico_id):
     """
     Endpoint para EXCLUIR (DELETE) um serviço.

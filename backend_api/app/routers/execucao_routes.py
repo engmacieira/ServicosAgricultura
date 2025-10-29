@@ -10,7 +10,7 @@ execucao_bp = Blueprint('execucao_bp', __name__)
 
 
 # --- ROTA DE LEITURA (GET ALL) ---
-@execucao_bp.route('/api/execucoes', methods=['GET'])
+@execucao_bp.route('/execucoes', methods=['GET'])
 def get_execucoes_api():
     """
     Endpoint para LER (GET) todas as execuções.
@@ -21,7 +21,7 @@ def get_execucoes_api():
 
 
 # --- ROTA DE LEITURA (GET BY ID) ---
-@execucao_bp.route('/api/execucoes/<int:execucao_id>', methods=['GET'])
+@execucao_bp.route('/execucoes/<int:execucao_id>', methods=['GET'])
 def get_execucao_api(execucao_id):
     """
     Endpoint para LER (GET) uma execução específica pelo ID.
@@ -35,7 +35,7 @@ def get_execucao_api(execucao_id):
 
 
 # --- ROTA DE CRIAÇÃO (POST) ---
-@execucao_bp.route('/api/execucoes', methods=['POST'])
+@execucao_bp.route('/execucoes', methods=['POST'])
 def create_execucao_api():
     """
     Endpoint para CRIAR (POST) uma nova execução.
@@ -69,7 +69,7 @@ def create_execucao_api():
 
 
 # --- ROTA DE ATUALIZAÇÃO (PUT) ---
-@execucao_bp.route('/api/execucoes/<int:execucao_id>', methods=['PUT'])
+@execucao_bp.route('/execucoes/<int:execucao_id>', methods=['PUT'])
 def update_execucao_api(execucao_id):
     """
     Endpoint para ATUALIZAR (PUT) uma execução existente.
@@ -108,7 +108,7 @@ def update_execucao_api(execucao_id):
 
 
 # --- ROTA DE EXCLUSÃO (DELETE) ---
-@execucao_bp.route('/api/execucoes/<int:execucao_id>', methods=['DELETE'])
+@execucao_bp.route('/execucoes/<int:execucao_id>', methods=['DELETE'])
 def delete_execucao_api(execucao_id):
     """
     Endpoint para EXCLUIR (DELETE) uma execução.

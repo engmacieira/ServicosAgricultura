@@ -9,7 +9,7 @@ pagamento_bp = Blueprint('pagamento_bp', __name__)
 
 
 # --- ROTA 1: Listar pagamentos de UMA execução (Aninhada) ---
-@pagamento_bp.route('/api/execucoes/<int:execucao_id>/pagamentos', methods=['GET'])
+@pagamento_bp.route('/execucoes/<int:execucao_id>/pagamentos', methods=['GET'])
 def get_pagamentos_por_execucao_api(execucao_id):
     """
     Endpoint para LER (GET) todos os pagamentos de uma execução específica.
@@ -24,7 +24,7 @@ def get_pagamentos_por_execucao_api(execucao_id):
 
 
 # --- ROTA 2: Criar um pagamento para UMA execução (Aninhada) ---
-@pagamento_bp.route('/api/execucoes/<int:execucao_id>/pagamentos', methods=['POST'])
+@pagamento_bp.route('/execucoes/<int:execucao_id>/pagamentos', methods=['POST'])
 def create_pagamento_api(execucao_id):
     """
     Endpoint para CRIAR (POST) um novo pagamento para uma execução específica.
@@ -55,7 +55,7 @@ def create_pagamento_api(execucao_id):
 
 
 # --- ROTA 3: Buscar um pagamento específico (Direta) ---
-@pagamento_bp.route('/api/pagamentos/<int:pagamento_id>', methods=['GET'])
+@pagamento_bp.route('/pagamentos/<int:pagamento_id>', methods=['GET'])
 def get_pagamento_api(pagamento_id):
     """
     Endpoint para LER (GET) um pagamento específico pelo seu ID.
@@ -68,7 +68,7 @@ def get_pagamento_api(pagamento_id):
 
 
 # --- ROTA 4: Atualizar um pagamento específico (Direta) ---
-@pagamento_bp.route('/api/pagamentos/<int:pagamento_id>', methods=['PUT'])
+@pagamento_bp.route('/pagamentos/<int:pagamento_id>', methods=['PUT'])
 def update_pagamento_api(pagamento_id):
     """
     Endpoint para ATUALIZAR (PUT) um pagamento existente.
@@ -104,7 +104,7 @@ def update_pagamento_api(pagamento_id):
 
 
 # --- ROTA 5: Excluir um pagamento específico (Direta) ---
-@pagamento_bp.route('/api/pagamentos/<int:pagamento_id>', methods=['DELETE'])
+@pagamento_bp.route('/pagamentos/<int:pagamento_id>', methods=['DELETE'])
 def delete_pagamento_api(pagamento_id):
     """
     Endpoint para EXCLUIR (DELETE) um pagamento.

@@ -8,7 +8,7 @@ import app.repositories.produtor_repository as produtor_repository # Para valida
 relatorio_bp = Blueprint('relatorio_bp', __name__)
 
 
-@relatorio_bp.route('/api/relatorios/produtor/<int:produtor_id>/dividas', methods=['GET'])
+@relatorio_bp.route('/relatorios/produtor/<int:produtor_id>/dividas', methods=['GET'])
 def get_relatorio_dividas_produtor_api(produtor_id):
     """
     Endpoint para LER (GET) o relatório de dívidas
