@@ -3,7 +3,7 @@ const { ipcMain } = require('electron');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(args));
 
 // A URL base da nossa API
-const API_URL = 'http://127.0.0.1:5000/api';
+const API_URL = 'http://127.0.0.1:5000';
 
 // Mark Construtor: Esta função "registra" todos os handlers
 // relacionados a Produtor.

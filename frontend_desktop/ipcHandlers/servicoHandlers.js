@@ -1,6 +1,6 @@
 // ipcHandlers/servicoHandlers.js
 const { ipcMain } = require('electron');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(args));
+const fetch = require('node-fetch');
 
 const API_URL = 'http://127.0.0.1:5000/api';
 
