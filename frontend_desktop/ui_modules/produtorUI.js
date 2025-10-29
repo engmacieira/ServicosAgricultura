@@ -108,3 +108,44 @@ export function desenharListaProdutores(produtores) {
         listaProdutores.appendChild(item);
     });
 }
+
+export function limparFormularioProdutor() {
+    if (!produtorForm) return;
+    produtorIdInput.value = '';
+    produtorNomeInput.value = '';
+    produtorCpfInput.value = '';
+    produtorRegiaoInput.value = '';
+    produtorReferenciaInput.value = '';
+    produtorTelefoneInput.value = '';
+    produtorNomeInput.focus();
+}
+
+export function preencherFormularioProdutor(produtor) {
+    if (!produtorForm) return;
+    produtorIdInput.value = produtor.id;
+    produtorNomeInput.value = produtor.nome;
+    produtorCpfInput.value = produtor.cpf || '';
+    produtorRegiaoInput.value = produtor.regiao || '';
+    produtorReferenciaInput.value = produtor.referencia || '';
+    produtorTelefoneInput.value = produtor.telefone || '';
+    produtorNomeInput.focus();
+}
+
+export function coletarDadosProdutor() {
+    if (!produtorForm) return null;
+    if (!produtorNomeInput.value) {
+        alert("O nome é obrigatório.");
+        return null;
+    }
+    return {
+        nome: produtorNomeInput.value,
+        cpf: produtorCpfInput.value || null,
+        regiao: produtorRegiaoInput.value || null,
+        referencia: produtorReferenciaInput.value || null,
+        telefone: produtorTelefoneInput.value || null
+    };
+}
+
+export function getIdProdutor() {
+    return produtorIdInput ? produtorIdInput.value || null : null;
+}

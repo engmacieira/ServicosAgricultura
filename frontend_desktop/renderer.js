@@ -21,7 +21,7 @@ let cacheExecucoes = [];
 async function carregarProdutores() {
     try {
         cacheProdutores = await api.getProdutores(); 
-        ui.desenharListaProdutores(cacheProdutores, handleEditProdutor, handleDeleteProdutor);
+        ui.desenharListaProdutores(cacheProdutores);
     } catch (error) {
         console.error("Erro ao carregar produtores:", error);
         alert("Falha grave ao buscar produtores.");
@@ -44,6 +44,7 @@ async function handleSaveProdutor(event) {
         ui.limparFormularioProdutor();
         await carregarProdutores(); 
         relatorioProdutoresCarregado = false;
+        agendamentoDropdownsCarregados = false;
     } catch (error) {
         console.error("Erro ao salvar produtor:", error);
         alert("Falha ao salvar produtor.");
@@ -76,7 +77,7 @@ async function handleDeleteProdutor(id) {
 async function carregarServicos() {
      try {
         cacheServicos = await api.getServicos(); 
-        ui.desenharListaServicos(cacheServicos, handleEditServico, handleDeleteServico);
+        ui.desenharListaServicos(cacheServicos);
     } catch (error) {
         console.error("Erro ao carregar serviços:", error);
         alert("Falha grave ao buscar serviços.");
@@ -98,6 +99,7 @@ async function handleSaveServico(event) {
         }
         ui.limparFormularioServico();
         await carregarServicos(); 
+        agendamentoDropdownsCarregados = false;
     } catch (error) {
         console.error("Erro ao salvar serviço:", error);
         alert("Falha ao salvar serviço. (Verifique se o nome já existe)");
@@ -127,21 +129,6 @@ async function handleDeleteServico(id) {
 // ======================================================
 // 3. HANDLERS DE LÓGICA - AGENDAMENTO
 // ======================================================
-async function carregarDadosAgendamento() {
-    if (agendamentoDropdownsCarregados) return;
-    console.log("Carregando dados para dropdowns de agendamento...");
-    try {
-        if (cacheProdutores.length === 0) cacheProdutores = await api.getProdutores();
-        if (cacheServicos.length === 0) cacheServicos = await api.getServicos();
-        ui.popularDropdownProdutores(cacheProdutores);
-        ui.popularDropdownServicos(cacheServicos);
-        agendamentoDropdownsCarregados = true;
-        console.log("Dropdowns de agendamento populados.");
-    } catch (error) {
-        console.error("Erro ao carregar dados para agendamento:", error);
-        alert("Falha ao carregar dados para agendamento. Verifique o console.");
-    }
-}
 async function handleSaveExecucao(event) {
     event.preventDefault();
     const id = ui.getIdAgendamento(); 
@@ -178,23 +165,64 @@ function handleClearAgendamento() {
 // ======================================================
 // 4. HANDLERS DE LÓGICA - HISTÓRICO
 // ======================================================
+
+// Mark Construtor: Esta função foi restaurada após a exclusão acidental durante a refatoração.
 async function carregarExecucoes() {
-    if (historicoCarregadoPrimeiraVez) return; 
-    console.log("Carregando histórico de execuções...");
-    
+    console.log("Carregando Execuções...");
     try {
-        if (cacheProdutores.length === 0) cacheProdutores = await api.getProdutores();
-        if (cacheServicos.length === 0) cacheServicos = await api.getServicos();
-        cacheExecucoes = await api.getExecucoes(); 
+        // Garantir que Produtores e Serviços estejam no cache para o mapeamento
+        // Usamos || (OU) para buscar apenas se o cache estiver vazio.
+        if (cacheProdutores.length === 0) {
+            cacheProdutores = await api.getProdutores();
+        }
+        if (cacheServicos.length === 0) {
+            cacheServicos = await api.getServicos();
+        }
 
-        const produtoresMap = cacheProdutores.reduce((map, prod) => { map[prod.id] = prod.nome; return map; }, {});
-        const servicosMap = cacheServicos.reduce((map, serv) => { map[serv.id] = serv.nome; return map; }, {});
+        const execucoes = await api.getExecucoes();
+        cacheExecucoes = execucoes;
 
-        ui.desenharListaExecucoes(cacheExecucoes, produtoresMap, servicosMap, handleEditExecucao, handleDeleteExecucao);
+        // Conceito de Mapeamento: Criação de Maps para lookup rápido do nome pelo ID
+        const produtoresMap = new Map(cacheProdutores.map(p => [p.id, p.nome]));
+        const servicosMap = new Map(cacheServicos.map(s => [s.id, s.nome]));
 
-        historicoCarregadoPrimeiraVez = true;
-        console.log("Histórico carregado.");
+        // Chamada para a UI desenhar a tabela com os dados.
+        ui.desenharListaExecucoes(cacheExecucoes, produtoresMap, servicosMap);
+        
+        // Tentativa de recarregar a seção de pagamentos, se necessário
+        if (ui.isPagamentoFormVisible()) {
+            carregarDadosPagamentos();
+        }
 
+        console.log("Execuções carregadas e lista desenhada.");
+
+    } catch (error) {
+        console.error("Erro ao carregar execuções:", error);
+        alert("Falha grave ao buscar o histórico de execuções.");
+    }
+}
+
+async function carregarDadosAgendamento() {
+    // Não usamos mais 'agendamentoDropdownsCarregados'.
+    // Apenas garantimos que os caches estejam cheios ou atualizados.
+    console.log("Carregando dados para dropdowns de agendamento...");
+    try {
+        // Sempre busca Produtores e Serviços se o cache estiver vazio
+        if (cacheProdutores.length === 0) {
+            cacheProdutores = await api.getProdutores();
+        }
+        if (cacheServicos.length === 0) {
+            cacheServicos = await api.getServicos();
+        }
+        
+        // CORREÇÃO ESSENCIAL: Garante que os dropdowns sempre são populados
+        // com o cache mais recente, independentemente de onde ele veio.
+        ui.popularDropdownProdutores(cacheProdutores);
+        ui.popularDropdownServicos(cacheServicos);
+        
+        // Remova a linha 'agendamentoDropdownsCarregados = true;'
+        
+        console.log("Dropdowns de agendamento populados.");
     } catch (error) {
          console.error("Erro ao carregar histórico de execuções:", error);
          alert("Falha grave ao buscar histórico.");
@@ -441,10 +469,22 @@ ui.inicializarApp({
     onTabChange: handleTabChange,
     onSaveProdutor: handleSaveProdutor,
     onClearProdutor: handleClearProdutor,
+    // --- Handlers de Ação de Produtores Adicionados ---
+    onEditProdutor: handleEditProdutor,
+    onDeleteProdutor: handleDeleteProdutor,
+    // ----------------------------------------------------
     onSaveServico: handleSaveServico,
     onClearServico: handleClearServico,
+    // --- Handlers de Ação de Serviços Adicionados ---
+    onEditServico: handleEditServico,
+    onDeleteServico: handleDeleteServico,
+    // ------------------------------------------------
     onSaveExecucao: handleSaveExecucao,
     onClearAgendamento: handleClearAgendamento,
+    // --- Handlers de Ação de Histórico Adicionados ---
+    onEditExecucao: handleEditExecucao,
+    onDeleteExecucao: handleDeleteExecucao,
+    // ---------------------------------------------------
     onExecucaoSelecionada: handleExecucaoSelecionada,
     onSavePagamento: handleSavePagamento,
     onClearPagamento: handleClearPagamento,

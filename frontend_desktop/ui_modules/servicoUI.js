@@ -108,3 +108,39 @@ export function desenharListaServicos(servicos) {
         listaServicos.appendChild(item);
     });
 }
+
+export function limparFormularioServico() {
+    if (!servicoForm) return;
+    servicoIdInput.value = '';
+    servicoNomeInput.value = '';
+    servicoValorInput.value = '0.00';
+    servicoNomeInput.focus();
+}
+
+export function preencherFormularioServico(servico) {
+    if (!servicoForm) return;
+    servicoIdInput.value = servico.id;
+    servicoNomeInput.value = servico.nome;
+    servicoValorInput.value = servico.valor_unitario;
+    servicoNomeInput.focus();
+}
+
+export function coletarDadosServico() {
+    if (!servicoForm) return null;
+    const nome = servicoNomeInput.value;
+    const valorUnitario = parseFloat(servicoValorInput.value);
+    
+    if (!nome || isNaN(valorUnitario) || valorUnitario < 0) {
+        alert("Por favor, preencha o Nome e o Valor Unitário (maior ou igual a zero).");
+        return null;
+    }
+
+    return {
+        nome: nome,
+        valor_unitario: valorUnitario
+    };
+}
+
+export function getIdServico() {
+    return servicoIdInput ? servicoIdInput.value || null : null;
+}
