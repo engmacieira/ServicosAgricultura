@@ -1,40 +1,42 @@
 // preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Mark Construtor: Estamos a expandir o nosso objeto 'api'
-// com as novas habilidades que registámos nos handlers.
 contextBridge.exposeInMainWorld('api', {
-  
-  // --- PRODUTORES (Já existiam) ---
-  getProdutores: () => {
-    return ipcRenderer.invoke('get-produtores');
+
+  // --- PRODUTORES ---
+  getProdutores: () => ipcRenderer.invoke('get-produtores'),
+  createProdutor: (produtorData) => ipcRenderer.invoke('create-produtor', produtorData),
+  updateProdutor: (produtorId, produtorData) => ipcRenderer.invoke('update-produtor', produtorId, produtorData),
+  deleteProdutor: (produtorId) => ipcRenderer.invoke('delete-produtor', produtorId),
+
+  // --- SERVIÇOS ---
+  getServicos: () => ipcRenderer.invoke('get-servicos'),
+  createServico: (servicoData) => ipcRenderer.invoke('create-servico', servicoData),
+  updateServico: (servicoId, servicoData) => ipcRenderer.invoke('update-servico', servicoId, servicoData),
+  deleteServico: (servicoId) => ipcRenderer.invoke('delete-servico', servicoId),
+
+  // --- EXECUÇÕES ---
+  createExecucao: (execucaoData) => ipcRenderer.invoke('create-execucao', execucaoData),
+  getExecucoes: () => ipcRenderer.invoke('get-execucoes'),
+  updateExecucao: (execucaoId, execucaoData) => ipcRenderer.invoke('update-execucao', execucaoId, execucaoData),
+  deleteExecucao: (execucaoId) => ipcRenderer.invoke('delete-execucao', execucaoId),
+
+  // --- PAGAMENTOS (NOVOS) ---
+  getPagamentosPorExecucao: (execucaoId) => {
+    // Invoca o handler 'get-pagamentos-por-execucao'
+    return ipcRenderer.invoke('get-pagamentos-por-execucao', execucaoId);
   },
-  createProdutor: (produtorData) => {
-    return ipcRenderer.invoke('create-produtor', produtorData); 
+  createPagamento: (execucaoId, pagamentoData) => {
+    // Invoca o handler 'create-pagamento'
+    return ipcRenderer.invoke('create-pagamento', execucaoId, pagamentoData);
   },
-  updateProdutor: (produtorId, produtorData) => {
-    return ipcRenderer.invoke('update-produtor', produtorId, produtorData);
+  updatePagamento: (pagamentoId, pagamentoData) => {
+    // Invoca o handler 'update-pagamento'
+    return ipcRenderer.invoke('update-pagamento', pagamentoId, pagamentoData);
   },
-  deleteProdutor: (produtorId) => {
-    return ipcRenderer.invoke('delete-produtor', produtorId);
-  },
-  
-  // --- SERVIÇOS (NOVOS) ---
-  getServicos: () => {
-    // Invoca o handler 'get-servicos' no main.js (via ipcHandlers)
-    return ipcRenderer.invoke('get-servicos');
-  },
-  createServico: (servicoData) => {
-    // Invoca o handler 'create-servico'
-    return ipcRenderer.invoke('create-servico', servicoData); 
-  },
-  updateServico: (servicoId, servicoData) => {
-    // Invoca o handler 'update-servico'
-    return ipcRenderer.invoke('update-servico', servicoId, servicoData);
-  },
-  deleteServico: (servicoId) => {
-    // Invoca o handler 'delete-servico'
-    return ipcRenderer.invoke('delete-servico', servicoId);
+  deletePagamento: (pagamentoId) => {
+    // Invoca o handler 'delete-pagamento'
+    return ipcRenderer.invoke('delete-pagamento', pagamentoId);
   }
-  
+
 });
