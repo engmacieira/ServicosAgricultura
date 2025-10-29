@@ -1,18 +1,17 @@
 // ipcHandlers/produtorHandlers.js
 const { ipcMain } = require('electron');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(args));
+const fetch = require('node-fetch'); // <-- CORREÇÃO 1: Mudar para 'require'
 
-// A URL base da nossa API
+// A URL base da nossa API (SEM /api)
 const API_URL = 'http://127.0.0.1:5000';
 
-// Mark Construtor: Esta função "registra" todos os handlers
-// relacionados a Produtor.
 function registerProdutorHandlers() {
 
     // --- GET ALL ---
     ipcMain.handle('get-produtores', async () => {
         try {
-            const response = await fetch(`${API_URL}/produtores`);
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/produtores`);
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();
         } catch (error) {
@@ -24,7 +23,8 @@ function registerProdutorHandlers() {
     // --- CREATE (POST) ---
     ipcMain.handle('create-produtor', async (event, produtorData) => {
         try {
-            const response = await fetch(`${API_URL}/produtores`, {
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/produtores`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(produtorData),
@@ -40,7 +40,8 @@ function registerProdutorHandlers() {
     // --- UPDATE (PUT) ---
     ipcMain.handle('update-produtor', async (event, produtorId, produtorData) => {
         try {
-            const response = await fetch(`${API_URL}/produtores/${produtorId}`, {
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/produtores/${produtorId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(produtorData),
@@ -56,7 +57,8 @@ function registerProdutorHandlers() {
     // --- DELETE (DELETE) ---
     ipcMain.handle('delete-produtor', async (event, produtorId) => {
         try {
-            const response = await fetch(`${API_URL}/produtores/${produtorId}`, {
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/produtores/${produtorId}`, {
                 method: 'DELETE',
             });
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
@@ -68,5 +70,4 @@ function registerProdutorHandlers() {
     });
 }
 
-// "Exportamos" a função de registro para que o 'index.js' possa chamá-la.
 module.exports = { registerProdutorHandlers };

@@ -2,18 +2,16 @@
 const { ipcMain } = require('electron');
 const fetch = require('node-fetch');
 
-const API_URL = 'http://127.0.0.1:5000/api';
+// CORREÇÃO 1: Remover '/api' daqui
+const API_URL = 'http://127.0.0.1:5000';
 
-/**
- * Registra todos os handlers (manipuladores) de IPC
- * relacionados a Serviços.
- */
 function registerServicoHandlers() {
 
     // --- GET ALL ---
     ipcMain.handle('get-servicos', async () => {
         try {
-            const response = await fetch(`${API_URL}/servicos`);
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/servicos`);
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();
         } catch (error) {
@@ -25,7 +23,8 @@ function registerServicoHandlers() {
     // --- CREATE (POST) ---
     ipcMain.handle('create-servico', async (event, servicoData) => {
         try {
-            const response = await fetch(`${API_URL}/servicos`, {
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/servicos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(servicoData),
@@ -41,7 +40,8 @@ function registerServicoHandlers() {
     // --- UPDATE (PUT) ---
     ipcMain.handle('update-servico', async (event, servicoId, servicoData) => {
         try {
-            const response = await fetch(`${API_URL}/servicos/${servicoId}`, {
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/servicos/${servicoId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(servicoData),
@@ -57,7 +57,8 @@ function registerServicoHandlers() {
     // --- DELETE (DELETE) ---
     ipcMain.handle('delete-servico', async (event, servicoId) => {
         try {
-            const response = await fetch(`${API_URL}/servicos/${servicoId}`, {
+            // CORREÇÃO 2: Adicionar '/api' aqui
+            const response = await fetch(`${API_URL}/api/servicos/${servicoId}`, {
                 method: 'DELETE',
             });
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
@@ -69,5 +70,4 @@ function registerServicoHandlers() {
     });
 }
 
-// Exportamos a nova função de registro
 module.exports = { registerServicoHandlers };
