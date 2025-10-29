@@ -21,22 +21,25 @@ contextBridge.exposeInMainWorld('api', {
   updateExecucao: (execucaoId, execucaoData) => ipcRenderer.invoke('update-execucao', execucaoId, execucaoData),
   deleteExecucao: (execucaoId) => ipcRenderer.invoke('delete-execucao', execucaoId),
 
-  // --- PAGAMENTOS (NOVOS) ---
+  // --- PAGAMENTOS ---
   getPagamentosPorExecucao: (execucaoId) => {
-    // Invoca o handler 'get-pagamentos-por-execucao'
     return ipcRenderer.invoke('get-pagamentos-por-execucao', execucaoId);
   },
   createPagamento: (execucaoId, pagamentoData) => {
-    // Invoca o handler 'create-pagamento'
     return ipcRenderer.invoke('create-pagamento', execucaoId, pagamentoData);
   },
   updatePagamento: (pagamentoId, pagamentoData) => {
-    // Invoca o handler 'update-pagamento'
     return ipcRenderer.invoke('update-pagamento', pagamentoId, pagamentoData);
   },
   deletePagamento: (pagamentoId) => {
-    // Invoca o handler 'delete-pagamento'
     return ipcRenderer.invoke('delete-pagamento', pagamentoId);
+  },
+  
+  // --- Mark Construtor: TAREFA 4 ---
+  // --- RELATÓRIOS (NOVO) ---
+  getRelatorioDividas: (produtorId) => {
+    // Invoca o handler 'get-relatorio-dividas'
+    return ipcRenderer.invoke('get-relatorio-dividas', produtorId);
   }
 
 });

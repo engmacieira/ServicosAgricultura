@@ -2,7 +2,8 @@
 const { ipcMain } = require('electron');
 const fetch = require('node-fetch');
 
-const API_URL = 'http://127.0.0.1:5000/api'; // Base da API
+// Mark Construtor: CORREÇÃO 1 - URL base (sem /api)
+const API_URL = 'http://127.0.0.1:5000'; 
 
 /**
  * Registra os handlers (manipuladores) de IPC
@@ -13,8 +14,9 @@ function registerPagamentoHandlers() {
     // --- GET Pagamentos por Execução (Rota Aninhada) ---
     ipcMain.handle('get-pagamentos-por-execucao', async (event, execucaoId) => {
         try {
+            // Mark Construtor: CORREÇÃO 2 - Adicionado /api
             // Chama GET /api/execucoes/:execucaoId/pagamentos
-            const response = await fetch(`${API_URL}/execucoes/${execucaoId}/pagamentos`);
+            const response = await fetch(`${API_URL}/api/execucoes/${execucaoId}/pagamentos`);
             if (!response.ok) {
                 // Se a execução não for encontrada (404), a API do backend já trata
                 throw new Error(`Erro na API: ${response.statusText}`);
@@ -29,8 +31,9 @@ function registerPagamentoHandlers() {
     // --- CREATE Pagamento para Execução (Rota Aninhada) ---
     ipcMain.handle('create-pagamento', async (event, execucaoId, pagamentoData) => {
         try {
+             // Mark Construtor: CORREÇÃO 2 - Adicionado /api
              // Chama POST /api/execucoes/:execucaoId/pagamentos
-            const response = await fetch(`${API_URL}/execucoes/${execucaoId}/pagamentos`, {
+            const response = await fetch(`${API_URL}/api/execucoes/${execucaoId}/pagamentos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pagamentoData), // Ex: { valor_pago: 100.50, data_pagamento: '2025-11-01' }
@@ -50,8 +53,9 @@ function registerPagamentoHandlers() {
     // --- UPDATE Pagamento (Rota Direta) ---
     ipcMain.handle('update-pagamento', async (event, pagamentoId, pagamentoData) => {
         try {
+            // Mark Construtor: CORREÇÃO 2 - Adicionado /api
             // Chama PUT /api/pagamentos/:pagamentoId
-            const response = await fetch(`${API_URL}/pagamentos/${pagamentoId}`, {
+            const response = await fetch(`${API_URL}/api/pagamentos/${pagamentoId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pagamentoData), // Ex: { execucao_id: 5, valor_pago: 110.00, data_pagamento: '2025-11-02' }
@@ -71,8 +75,9 @@ function registerPagamentoHandlers() {
     // --- DELETE Pagamento (Rota Direta) ---
     ipcMain.handle('delete-pagamento', async (event, pagamentoId) => {
         try {
+             // Mark Construtor: CORREÇÃO 2 - Adicionado /api
              // Chama DELETE /api/pagamentos/:pagamentoId
-            const response = await fetch(`${API_URL}/pagamentos/${pagamentoId}`, {
+            const response = await fetch(`${API_URL}/api/pagamentos/${pagamentoId}`, {
                 method: 'DELETE',
             });
              if (!response.ok) {

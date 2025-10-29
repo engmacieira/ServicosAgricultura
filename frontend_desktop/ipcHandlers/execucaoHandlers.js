@@ -2,7 +2,8 @@
 const { ipcMain } = require('electron');
 const fetch = require('node-fetch');
 
-const API_URL = 'http://127.0.0.1:5000/api'; // Certifique-se que /api está aqui
+// Mark Construtor: CORREÇÃO 1 - URL base (sem /api)
+const API_URL = 'http://127.0.0.1:5000'; 
 
 /**
  * Registra os handlers (manipuladores) de IPC
@@ -13,7 +14,8 @@ function registerExecucaoHandlers() {
     // --- CREATE (POST) ---
     ipcMain.handle('create-execucao', async (event, execucaoData) => {
         try {
-            const response = await fetch(`${API_URL}/execucoes`, { // Chama POST /api/execucoes
+            // Mark Construtor: CORREÇÃO 2 - Adicionado /api
+            const response = await fetch(`${API_URL}/api/execucoes`, { // Chama POST /api/execucoes
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(execucaoData),
@@ -33,7 +35,8 @@ function registerExecucaoHandlers() {
     // --- GET ALL ---
     ipcMain.handle('get-execucoes', async () => {
         try {
-            const response = await fetch(`${API_URL}/execucoes`); // Chama GET /api/execucoes
+            // Mark Construtor: CORREÇÃO 2 - Adicionado /api
+            const response = await fetch(`${API_URL}/api/execucoes`); // Chama GET /api/execucoes
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();
         } catch (error) {
@@ -45,7 +48,8 @@ function registerExecucaoHandlers() {
     // --- UPDATE (PUT) - NOVO ---
     ipcMain.handle('update-execucao', async (event, execucaoId, execucaoData) => {
         try {
-            const response = await fetch(`${API_URL}/execucoes/${execucaoId}`, { // Chama PUT /api/execucoes/:id
+            // Mark Construtor: CORREÇÃO 2 - Adicionado /api
+            const response = await fetch(`${API_URL}/api/execucoes/${execucaoId}`, { // Chama PUT /api/execucoes/:id
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(execucaoData),
@@ -65,7 +69,8 @@ function registerExecucaoHandlers() {
     // --- DELETE (DELETE) - NOVO ---
     ipcMain.handle('delete-execucao', async (event, execucaoId) => {
         try {
-            const response = await fetch(`${API_URL}/execucoes/${execucaoId}`, { // Chama DELETE /api/execucoes/:id
+            // Mark Construtor: CORREÇÃO 2 - Adicionado /api
+            const response = await fetch(`${API_URL}/api/execucoes/${execucaoId}`, { // Chama DELETE /api/execucoes/:id
                 method: 'DELETE',
             });
              if (!response.ok) {

@@ -25,7 +25,7 @@
         button { padding: 10px 15px; cursor: pointer; margin-right: 5px;}
         h2 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; }
         .form-buttons { margin-left: 130px; padding-top: 10px; }
-        #lista-historico span, #lista-pagamentos span { margin-right: 10px; } /* Estilo compartilhado */
+        #lista-historico span, #lista-pagamentos span, #lista-relatorio-dividas span { margin-right: 10px; } /* Estilo compartilhado */
         /* Layout Painel Pagamentos */
         #painel-pagamentos { display: flex; gap: 20px; }
         #pagamentos-coluna-selecao { flex: 1; }
@@ -33,6 +33,11 @@
         #pagamentos-detalhes-execucao { background-color: #f9f9f9; padding: 10px; margin-bottom: 15px; border-radius: 4px; }
         #pagamento-form label { width: 100px; } /* Ajuste label pagamento */
         .pagamento-item-info { flex-grow: 1; } /* Faz info do pagamento ocupar espaço */
+        /* Layout Painel Relatórios */
+        #painel-relatorios { max-width: 900px; }
+        #relatorio-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px;}
+        #relatorio-header label { width: auto; }
+        #relatorio-select-produtor { min-width: 300px; }
     </style>
 </head>
 <body>
@@ -42,146 +47,43 @@
         <button class="tab-button" data-tab="painel-servicos">Serviços</button>
         <button class="tab-button" data-tab="painel-agendamento">Agendamento</button>
         <button class="tab-button" data-tab="painel-historico">Histórico</button>
+        <button class="tab-button" data-tab="painel-pagamentos">Pagamentos</button>
+        
+        <button class="tab-button" data-tab="painel-relatorios">Relatórios</button>
     </nav>
 
     <main class="tab-content">
 
         <div id="painel-produtores" class="tab-pane active">
-             <div class="page-layout">
-                <div class="coluna-formulario">
-                    <h2>Cadastrar/Editar Produtor</h2>
-                    <form id="produtor-form">
-                        <input type="hidden" id="produtor-id">
-                        <div><label for="produtor-nome">Nome:</label><input type="text" id="produtor-nome" required></div>
-                        <div><label for="produtor-cpf">CPF:</label><input type="text" id="produtor-cpf"></div>
-                        <div><label for="produtor-regiao">Região:</label><input type="text" id="produtor-regiao"></div>
-                        <div><label for="produtor-referencia">Referência:</label><input type="text" id="produtor-referencia"></div>
-                        <div><label for="produtor-telefone">Telefone:</label><input type="text" id="produtor-telefone"></div>
-                        <div class="form-buttons">
-                            <button type="submit" id="produtor-btn-salvar">Salvar</button>
-                            <button type="button" id="produtor-btn-limpar">Limpar</button>
-                        </div>
-                    </form>
-                </div>
-                <div class="coluna-lista">
-                    <h2>Produtores Cadastrados</h2>
-                    <ul id="lista-produtores"><li>Carregando...</li></ul>
-                </div>
-            </div>
-        </div>
+             </div>
 
         <div id="painel-servicos" class="tab-pane">
-            <div class="page-layout">
-                <div class="coluna-formulario">
-                    <h2>Cadastrar/Editar Serviço</h2>
-                    <form id="servico-form">
-                        <input type="hidden" id="servico-id">
-                        <div><label for="servico-nome">Nome:</label><input type="text" id="servico-nome" required></div>
-                        <div><label for="servico-valor">Valor Unit.:</label><input type="number" id="servico-valor" step="0.01" min="0" required></div>
-                         <div class="form-buttons">
-                            <button type="submit" id="servico-btn-salvar">Salvar</button>
-                            <button type="button" id="servico-btn-limpar">Limpar</button>
-                        </div>
-                    </form>
-                </div>
-                <div class="coluna-lista">
-                    <h2>Serviços Cadastrados</h2>
-                    <ul id="lista-servicos"><li>Carregando...</li></ul>
-                </div>
             </div>
-        </div>
 
         <div id="painel-agendamento" class="tab-pane">
-            <div class="coluna-formulario" style="border-right: none; max-width: 600px;">
-                <h2>Agendar/Editar Serviço</h2> <form id="agendamento-form">
-                     <input type="hidden" id="agendamento-id"> <div>
-                         <label for="agendamento-produtor">Produtor:</label>
-                         <select id="agendamento-produtor" required>
-                             <option value="">Carregando...</option>
-                         </select>
-                     </div>
-                     <div>
-                         <label for="agendamento-servico">Serviço:</label>
-                         <select id="agendamento-servico" required>
-                             <option value="">Carregando...</option>
-                         </select>
-                     </div>
-                     <div>
-                         <label for="agendamento-data">Data Execução:</label>
-                         <input type="date" id="agendamento-data" required>
-                     </div>
-                     <div>
-                         <label for="agendamento-horas">Horas Prestadas:</label>
-                         <input type="number" id="agendamento-horas" step="0.1" min="0" value="0.0">
-                     </div>
-                     <div>
-                         <label for="agendamento-valor">Valor Total (R$):</label>
-                         <input type="number" id="agendamento-valor" step="0.01" min="0" value="0.00" required>
-                     </div>
-                     <div class="form-buttons">
-                        <button type="submit" id="agendamento-btn-salvar">Salvar Agendamento</button>
-                        <button type="button" id="agendamento-btn-limpar">Limpar Formulário</button>
-                     </div>
-                </form>
             </div>
-        </div>
 
         <div id="painel-historico" class="tab-pane">
-            <div class="coluna-lista" style="flex: 1;"> <h2>Histórico de Agendamentos</h2>
-                <ul id="lista-historico">
-                    <li>Carregando histórico...</li>
-                </ul>
             </div>
+
+        <div id="painel-pagamentos" class="tab-pane">
+            </div>
+        
+        <div id="painel-relatorios" class="tab-pane">
+            <h2>Relatório de Dívidas por Produtor</h2>
+            <div id="relatorio-header">
+                <label for="relatorio-select-produtor">Selecione o Produtor:</label>
+                <select id="relatorio-select-produtor">
+                    <option value="">Carregando produtores...</option>
+                </select>
+            </div>
+            
+            <h3>Dívidas em Aberto</h3>
+            <ul id="lista-relatorio-dividas">
+                <li>Selecione um produtor para ver o relatório.</li>
+            </ul>
         </div>
 
-    </main>
-
-    <div id="painel-pagamentos" class="tab-pane">
-            <div id="pagamentos-coluna-selecao">
-                <h2>Selecionar Agendamento</h2>
-                <label for="pagamentos-select-execucao">Agendamento:</label>
-                <select id="pagamentos-select-execucao" style="width: 100%;">
-                    <option value="">Carregando agendamentos...</option>
-                    </select>
-                </div>
-
-            <div id="pagamentos-coluna-detalhes">
-                <h2>Detalhes e Pagamentos</h2>
-
-                <div id="pagamentos-detalhes-execucao" style="display: none;">
-                    <p><strong>Produtor:</strong> <span id="detalhe-produtor-nome"></span></p>
-                    <p><strong>Serviço:</strong> <span id="detalhe-servico-nome"></span></p>
-                    <p><strong>Data:</strong> <span id="detalhe-data"></span></p>
-                    <p><strong>Valor Total:</strong> R$ <span id="detalhe-valor-total"></span></p>
-                    <p><strong>Total Pago:</strong> R$ <span id="detalhe-total-pago"></span></p>
-                    <p><strong>Saldo Devedor:</strong> R$ <span id="detalhe-saldo-devedor"></span></p>
-                </div>
-
-                <h3>Pagamentos Realizados</h3>
-                <ul id="lista-pagamentos">
-                    <li>Selecione um agendamento para ver os pagamentos.</li>
-                </ul>
-
-                <h3>Adicionar Novo Pagamento</h3>
-                <form id="pagamento-form" style="display: none;">
-                    <input type="hidden" id="pagamento-id"> <input type="hidden" id="pagamento-execucao-id"> <div>
-                        <label for="pagamento-valor">Valor Pago (R$):</label>
-                        <input type="number" id="pagamento-valor" step="0.01" min="0.01" required>
-                    </div>
-                    <div>
-                        <label for="pagamento-data">Data Pagamento:</label>
-                        <input type="date" id="pagamento-data" required>
-                    </div>
-                    <div class="form-buttons">
-                        <button type="submit" id="pagamento-btn-salvar">Salvar Pagamento</button>
-                        <button type="button" id="pagamento-btn-limpar">Limpar</button>
-                        <button type="button" id="pagamento-btn-cancelar" style="display: none;">Cancelar Edição</button>
-                    </div>
-                </form>
-                 <p id="pagamento-form-placeholder">Selecione um agendamento para adicionar pagamentos.</p>
-
-            </div>
-        </div>
 
     </main>
 

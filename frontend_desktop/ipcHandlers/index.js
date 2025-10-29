@@ -2,8 +2,10 @@
 const { registerProdutorHandlers } = require('./produtorHandlers');
 const { registerServicoHandlers } = require('./servicoHandlers');
 const { registerExecucaoHandlers } = require('./execucaoHandlers');
-// Mark Construtor: Importamos o NOVO registrador de Pagamentos
 const { registerPagamentoHandlers } = require('./pagamentoHandlers');
+
+// Mark Construtor: TAREFA 3.1 - Importamos o NOVO registrador de Relatórios
+const { registerRelatorioHandlers } = require('./relatorioHandlers');
 
 /**
  * Função principal que registra TODOS os handlers
@@ -15,7 +17,10 @@ function registerIpcHandlers() {
     registerProdutorHandlers();
     registerServicoHandlers();
     registerExecucaoHandlers();
-    registerPagamentoHandlers(); // <-- REGISTRAMOS O NOVO MÓDULO
+    registerPagamentoHandlers(); 
+    
+    // Mark Construtor: TAREFA 3.2 - REGISTRAMOS O NOVO MÓDULO
+    registerRelatorioHandlers();
 
     console.log("Handlers de IPC registrados.");
 }
