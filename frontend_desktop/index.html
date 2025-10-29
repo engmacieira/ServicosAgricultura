@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gestão - App</title>
+    
+    <style>
+        /* CSS mínimo para abas */
+        body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        
+        /* A barra de navegação com as abas */
+        .tab-nav { display: flex; border-bottom: 2px solid #ccc; background-color: #f4f4f4; }
+        .tab-button { padding: 15px 20px; border: none; background: none; cursor: pointer; font-size: 16px; }
+        .tab-button.active { background-color: #fff; border-top: 2px solid #007bff; border-left: 1px solid #ccc; border-right: 1px solid #ccc; }
+        
+        /* O contêiner para os painéis de conteúdo */
+        .tab-content { flex: 1; padding: 1em; overflow-y: auto; }
+        
+        /* Esconde os painéis por padrão */
+        .tab-pane { display: none; }
+        
+        /* Mostra o painel que está ativo */
+        .tab-pane.active { display: block; }
+
+        /* Estilos do layout de duas colunas (que já tínhamos) */
+        .page-layout { display: flex; }
+        .coluna-formulario { flex: 1; padding: 1em; }
+        .coluna-lista { flex: 2; padding: 1em; }
+        form div { margin-bottom: 10px; }
+        label { display: inline-block; width: 100px; }
+        li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <nav class="tab-nav">
+        <button class="tab-button active" data-tab="painel-produtores">
+            Produtores
+        </button>
+        <button class="tab-button" data-tab="painel-servicos">
+            Serviços
+        </button>
+        </nav>
+
+    <main class="tab-content">
+        
+        <div id="painel-produtores" class="tab-pane active">
+            <div class="page-layout">
+                <div class="coluna-formulario">
+                    <h2>Cadastrar/Editar Produtor</h2>
+                    <form id="produtor-form">
+                        <input type="hidden" id="produtor-id">
+                        <div>
+                            <label for="produtor-nome">Nome:</label>
+                            <input type="text" id="produtor-nome" required>
+                        </div>
+                        <div><label for="produtor-cpf">CPF:</label><input type="text" id="produtor-cpf"></div>
+                        <div><label for="produtor-regiao">Região:</label><input type="text" id="produtor-regiao"></div>
+                        <div><label for="produtor-referencia">Referência:</label><input type="text" id="produtor-referencia"></div>
+                        <div><label for="produtor-telefone">Telefone:</label><input type="text" id="produtor-telefone"></div>
+                        
+                        <button type="submit" id="produtor-btn-salvar">Salvar</button>
+                        <button type="button" id="produtor-btn-limpar">Limpar</button>
+                    </form>
+                </div>
+                <div class="coluna-lista">
+                    <h2>Produtores Cadastrados</h2>
+                    <ul id="lista-produtores">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="painel-servicos" class="tab-pane">
+            <div class="page-layout">
+                <div class="coluna-formulario">
+                    <h2>Cadastrar/Editar Serviço</h2>
+                    <form id="servico-form">
+                        <input type="hidden" id="servico-id">
+                        <div>
+                            <label for="servico-nome">Nome:</label>
+                            <input type="text" id="servico-nome" required>
+                        </div>
+                        <div>
+                            <label for="servico-valor">Valor Unit.:</label>
+                            <input type="number" id="servico-valor" step="0.01" required>
+                        </div>
+                        <button type="submit" id="servico-btn-salvar">Salvar</button>
+                        <button type="button" id="servico-btn-limpar">Limpar</button>
+                    </form>
+                </div>
+                <div class="coluna-lista">
+                    <h2>Serviços Cadastrados</h2>
+                    <ul id="lista-servicos">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    
+    <script type="module" src="./renderer.js"></script>
+
+</body>
+</html>
