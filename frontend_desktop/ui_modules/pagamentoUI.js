@@ -10,6 +10,7 @@ let detalheValorTotalSpan;
 let detalheTotalPagoSpan;
 let detalheSaldoDevedorSpan;
 let listaPagamentosUl;
+let listaAgendamentosPadosUl;
 let pagamentoForm;
 let pagamentoFormPlaceholder;
 let pagamentoIdInput;
@@ -32,6 +33,7 @@ function _inicializarDOM() {
     detalheTotalPagoSpan = document.getElementById('detalhe-total-pago');
     detalheSaldoDevedorSpan = document.getElementById('detalhe-saldo-devedor');
     listaPagamentosUl = document.getElementById('lista-pagamentos');
+    listaAgendamentosPadosUl = document.getElementById('lista-agendamentos-pagos');
     pagamentoForm = document.getElementById('pagamento-form');
     pagamentoFormPlaceholder = document.getElementById('pagamento-form-placeholder');
     pagamentoIdInput = document.getElementById('pagamento-id');
@@ -103,6 +105,41 @@ export function popularDropdownExecucoesPagamentos(execucoes, produtoresMap = {}
     } else {
         pagamentosSelectExecucao.innerHTML = '<option value="">Nenhum agendamento encontrado</option>';
     }
+}
+
+/**
+ * (NOVO) Desenha a lista de execuções que já foram pagas.
+ */
+export function popularListaAgendamentosPagos(execucoes) {
+    if (!listaAgendamentosPagosUl) return;
+    listaAgendamentosPagosUl.innerHTML = '';
+
+    if (!execucoes || execucoes.length === 0) {
+        listaAgendamentosPagosUl.innerHTML = '<li>Nenhum agendamento pago encontrado.</li>';
+        return;
+    }
+
+    // Ordena por data (mais recente primeiro)
+    execucoes.sort((a, b) => new Date(b.data_execucao) - new Date(a.data_execucao));
+
+    execucoes.forEach(exec => {
+        const item = document.createElement('li');
+        item.style.fontSize = '0.9em';
+        item.style.padding = '5px';
+        item.style.borderBottom = '1px solid #eee';
+
+        let nomeDisplay = exec.produtor_nome;
+        if (exec.produtor_apelido) {
+            nomeDisplay += ` (${exec.produtor_apelido})`;
+        }
+
+        item.innerHTML = `
+            <strong>${exec.data_execucao}</strong> - ${nomeDisplay}
+            <br>
+            (Serviço: ${exec.servico_nome} - R$ ${exec.valor_total.toFixed(2)})
+        `;
+        listaAgendamentosPagosUl.appendChild(item);
+    });
 }
 
 // CÓDIGO CORRETO:

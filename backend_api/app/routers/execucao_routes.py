@@ -21,9 +21,10 @@ def get_execucoes_api():
     # 1. Lê os parâmetros da URL.
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
+    status = request.args.get('status', 'todos', type=str)
     
     # 2. Busca o total de itens
-    total_items = execucao_repository.get_execucoes_count()
+    total_items = execucao_repository.get_execucoes_count(status)
     if total_items == 0:
         return jsonify({
             'execucoes': [],
@@ -36,7 +37,7 @@ def get_execucoes_api():
     total_pages = math.ceil(total_items / per_page)
     
     # 4. Busca as execuções da PÁGINA ATUAL
-    execucoes = execucao_repository.get_all_execucoes(page, per_page)
+    execucoes = execucao_repository.get_all_execucoes(page, per_page, status)
     
     # 5. Retorna o objeto de paginação completo
     # CÓDIGO NOVO (Não precisa mais de .to_dict())

@@ -32,7 +32,7 @@ def get_execucao_by_id(execucao_id: int):
     )
 
 # CÓDIGO NOVO (Consulta "Inteligente")
-def get_all_execucoes(page: int, per_page: int):
+def get_all_execucoes(page: int, per_page: int, status: str = 'todos'):
     """
     (R)ead: Busca *todas* as Execucoes no banco (com paginação)
     e já inclui os nomes (Produtor/Serviço) e o total pago.
@@ -79,6 +79,15 @@ def get_all_execucoes(page: int, per_page: int):
             e.execucao_id, e.data_execucao, e.valor_total, e.horas_prestadas,
             p.nome, p.apelido, s.nome
             
+        # --- NOSSA NOVA LÓGICA DE FILTRO ---
+        having_clause = ""
+        if status == 'pendentes':
+            having_clause = "HAVING e.valor_total > COALESCE(SUM(pag.valor_pago), 0.0)"
+        elif status == 'pagas':
+            having_clause = "HAVING e.valor_total <= COALESCE(SUM(pag.valor_pago), 0.0)"
+    
+        sql += f" {having_clause} "
+            
         ORDER BY
             e.data_execucao DESC
             
@@ -119,13 +128,37 @@ def get_all_execucoes(page: int, per_page: int):
         
     return lista_execucoes
     
-def get_execucoes_count():
+def get_execucoes_count(status: str = 'todos'):
     """ Retorna o número total de execuções cadastradas. """
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT COUNT(*) FROM execucoes")
-    total = cursor.fetchone()[0] # Pega o primeiro valor da primeira linha
+# CÓDIGO NOVO (Contagem com filtro)
+    
+    # 1. Define a lógica de filtro (deve ser idêntica à de get_all_execucoes)
+    having_clause = ""
+    if status == 'pendentes':
+        having_clause = "HAVING e.valor_total > COALESCE(SUM(pag.valor_pago), 0.0)"
+    elif status == 'pagas':
+        having_clause = "HAVING e.valor_total <= COALESCE(SUM(pag.valor_pago), 0.0)"
+
+    # 2. Cria a subquery que encontra os IDs das execuções filtradas
+    sql_subquery = f"""
+        SELECT e.execucao_id
+        FROM execucoes AS e
+        LEFT JOIN pagamentos AS pag ON e.execucao_id = pag.execucao_id
+        GROUP BY e.execucao_id, e.valor_total
+        {having_clause}
+    """
+    
+    # 3. Conta quantos itens a subquery retornou
+    # (Se o status for 'todos', usamos a contagem simples e rápida)
+    if status == 'todos':
+        cursor.execute("SELECT COUNT(*) FROM execucoes")
+    else:
+        cursor.execute(f"SELECT COUNT(*) FROM ({sql_subquery}) AS sub")
+    
+    total = cursor.fetchone()[0]
     
     conn.close()
     return total

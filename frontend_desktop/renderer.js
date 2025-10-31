@@ -240,7 +240,7 @@ async function carregarExecucoes(page = 1) {
     try {
         // 1. Busca os dados paginados da API
         // A API agora retorna tudo pronto!
-        const paginatedData = await api.getExecucoes(page);
+        const paginatedData = await api.getExecucoes(page, 'todos'); // <-- Passa 'todos'
 
         // 2. Atualiza nosso estado (não precisamos mais de cacheExecucoes)
         historicoPaginaAtual = paginatedData.current_page;
@@ -321,25 +321,34 @@ async function handleDeleteExecucao(id) {
 // ======================================================
 // 5. HANDLERS DE LÓGICA - PAGAMENTOS
 // ======================================================
+// CÓDIGO NOVO (Carrega Pendentes e Pagas)
 async function carregarDadosPagamentos() {
     if (pagamentosDropdownCarregado) return;
-    console.log("Carregando dados para dropdown de pagamentos...");
+    console.log("Carregando dados para dropdown de pagamentos (Pendentes e Pagas)...");
+
     try {
-        if (cacheProdutores.length === 0) cacheProdutores = await api.getProdutores();
-        if (cacheServicos.length === 0) cacheServicos = await api.getServicos();
-        cacheExecucoes = await api.getExecucoes();
+        // 1. Busca execuções PENDENTES (página 1, status 'pendentes')
+        // A API já traz os nomes, não precisamos mais dos 'Maps'
+        const pendentesData = await api.getExecucoes(1, 'pendentes');
 
-        const produtoresMap = cacheProdutores.reduce((map, prod) => { map[prod.id] = prod.nome; return map; }, {});
-        const servicosMap = cacheServicos.reduce((map, serv) => { map[serv.id] = serv.nome; return map; }, {});
+        // 2. Busca execuções PAGAS (página 1, status 'pagas')
+        const pagasData = await api.getExecucoes(1, 'pagas');
 
-        ui.popularDropdownExecucoesPagamentos(cacheExecucoes, produtoresMap, servicosMap);
+        // 3. Popula o dropdown de seleção (só com pendentes)
+        // (Lembre-se de renomear no ui.js e ui_modules/pagamentoUI.js!)
+        ui.popularDropdownExecucoesPendentes(pendentesData.execucoes);
+
+        // 4. Popula a nova lista de agendamentos pagos
+        ui.popularListaAgendamentosPagos(pagasData.execucoes);
+
         pagamentosDropdownCarregado = true;
-        console.log("Dropdown de pagamentos populado.");
+        console.log("Dropdowns de pagamentos (Pendentes e Pagas) populados.");
 
     } catch (error) {
         console.error("Erro ao carregar dados para pagamentos:", error);
         alert("Falha ao carregar dados para pagamentos.");
-        ui.popularDropdownExecucoesPagamentos([], {}, {});
+        ui.popularDropdownExecucoesPendentes([]);
+        ui.popularListaAgendamentosPagos([]);
     }
 }
 async function handleExecucaoSelecionada(event) {

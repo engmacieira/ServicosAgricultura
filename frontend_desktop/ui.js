@@ -115,7 +115,8 @@ export const coletarDadosAgendamento = agendamentoUI.coletarDadosAgendamento;
 export const desenharListaExecucoes = historicoUI.desenharListaExecucoes;
 
 // Pagamentos
-export const popularDropdownExecucoesPagamentos = pagamentoUI.popularDropdownExecucoesPagamentos;
+export const popularDropdownExecucoesPendentes = pagamentoUI.popularDropdownExecucoesPendentes;
+export const popularListaAgendamentosPagos = pagamentoUI.popularListaAgendamentosPagos;
 export const exibirDetalhesExecucaoPagamentos = pagamentoUI.exibirDetalhesExecucaoPagamentos;
 export const desenharListaPagamentos = pagamentoUI.desenharListaPagamentos;
 export const limparFormularioPagamento = pagamentoUI.limparFormularioPagamento;

@@ -17,7 +17,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // --- EXECUÇÕES ---
   createExecucao: (execucaoData) => ipcRenderer.invoke('create-execucao', execucaoData),
-  getExecucoes: (page) => ipcRenderer.invoke('get-execucoes', page), // <-- Aceita 'page'
+  getExecucoes: (page, status) => ipcRenderer.invoke('get-execucoes', page, status), // <-- Aceita 'status'
   updateExecucao: (execucaoId, execucaoData) => ipcRenderer.invoke('update-execucao', execucaoId, execucaoData),
   deleteExecucao: (execucaoId) => ipcRenderer.invoke('delete-execucao', execucaoId),
 

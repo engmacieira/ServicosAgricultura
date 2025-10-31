@@ -33,10 +33,12 @@ function registerExecucaoHandlers() {
     });
 
     // --- GET ALL ---
-    ipcMain.handle('get-execucoes', async (event, page) => { // <-- Recebe 'page'
+    ipcMain.handle('get-execucoes', async (event, page, status) => { // <-- Recebe 'page' e 'status'
         try {
-            // Passa a página (ou 1 por padrão) e o limite de 10
-            const response = await fetch(`${API_URL}/api/execucoes?page=${page || 1}&per_page=10`);
+            // Define o limite. Para pagamentos, buscamos 500 (quase 'todos'). Para outros, 10.
+            const perPage = (status === 'pendentes' || status === 'pagas') ? 500 : 10;
+            
+            const response = await fetch(`${API_URL}/api/execucoes?page=${page || 1}&per_page=${perPage}&status=${status || 'todos'}`);
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();
         } catch (error) {
