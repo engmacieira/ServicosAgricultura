@@ -28,22 +28,26 @@ def get_servico_by_id(servico_id: int):
         valor_unitario=data['valor_unitario']
     )
 
-def get_all_servicos():
+def get_all_servicos(page: int, per_page: int):
     """
-    (R)ead: Busca *todos* os Servicos no banco.
+    (R)ead: Busca Servicos no banco com paginação.
     Retorna uma *lista* de objetos Servico.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # É uma boa prática ordenar os resultados
-    cursor.execute("SELECT * FROM servicos ORDER BY nome")
-    data = cursor.fetchall() # Pega todos os resultados
+    # 1. Calcula o OFFSET
+    offset = (page - 1) * per_page
+    
+    # 2. SQL com LIMIT e OFFSET
+    sql = "SELECT * FROM servicos ORDER BY nome LIMIT ? OFFSET ?"
+    
+    cursor.execute(sql, (per_page, offset))
+    data = cursor.fetchall() # Pega apenas a página atual
     
     conn.close()
     
     # Mapeia cada 'row' do banco para um objeto Servico
-    # usando uma "List Comprehension"
     return [
         Servico(
             servico_id=row['servico_id'],
@@ -51,6 +55,17 @@ def get_all_servicos():
             valor_unitario=row['valor_unitario']
         ) for row in data
     ]
+
+def get_servicos_count():
+    """ Retorna o número total de serviços cadastrados. """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) FROM servicos")
+    total = cursor.fetchone()[0] # Pega o primeiro valor da primeira linha
+    
+    conn.close()
+    return total
 
 def create_servico(servico: Servico):
     """

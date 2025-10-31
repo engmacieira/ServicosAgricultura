@@ -31,31 +31,104 @@ def get_execucao_by_id(execucao_id: int):
         valor_total=data['valor_total']
     )
 
-def get_all_execucoes():
+# CÓDIGO NOVO (Consulta "Inteligente")
+def get_all_execucoes(page: int, per_page: int):
     """
-    (R)ead: Busca *todas* as Execucoes no banco.
-    Retorna uma *lista* de objetos Execucao.
+    (R)ead: Busca *todas* as Execucoes no banco (com paginação)
+    e já inclui os nomes (Produtor/Serviço) e o total pago.
+    Retorna uma *lista de dicionários* pronta para a API.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Ordenar por data (mais recente primeiro) é uma boa prática
-    cursor.execute("SELECT * FROM execucoes ORDER BY data_execucao DESC")
-    data = cursor.fetchall()
+    offset = (page - 1) * per_page
+    
+    sql = """
+        SELECT 
+            e.execucao_id,
+            e.produtor_id, 
+            e.servico_id, 
+            e.data_execucao,
+            e.valor_total,
+            e.horas_prestadas,
+            
+            p.nome AS produtor_nome,
+            p.apelido AS produtor_apelido,
+            s.nome AS servico_nome,
+            
+            -- Se não houver pagamentos (NULL), trata como 0.0
+            COALESCE(SUM(pag.valor_pago), 0.0) AS total_pago
+            
+        FROM 
+            execucoes AS e
+        
+        -- Junta com produtores para pegar o nome/apelido
+        INNER JOIN 
+            produtores AS p ON e.produtor_id = p.produtor_id
+            
+        -- Junta com servicos para pegar o nome
+        INNER JOIN 
+            servicos AS s ON e.servico_id = s.servico_id
+            
+        -- LEFT JOIN é crucial: pega execuções mesmo sem pagamentos
+        LEFT JOIN 
+            pagamentos AS pag ON e.execucao_id = pag.execucao_id
+            
+        -- Agrupa todos os pagamentos de uma mesma execução
+        GROUP BY 
+            e.execucao_id, e.data_execucao, e.valor_total, e.horas_prestadas,
+            p.nome, p.apelido, s.nome
+            
+        ORDER BY
+            e.data_execucao DESC
+            
+        LIMIT ? OFFSET ?;
+    """
+    
+    cursor.execute(sql, (per_page, offset))
+    
+    # fetchall() com row_factory nos dá uma lista de "Rows" (tipo dicionário)
+    rows = cursor.fetchall()
     
     conn.close()
     
-    # Mapeia cada 'row' do banco para um objeto Execucao
-    return [
-        Execucao(
-            execucao_id=row['execucao_id'],
-            produtor_id=row['produtor_id'],
-            servico_id=row['servico_id'],
-            data_execucao=row['data_execucao'],
-            horas_prestadas=row['horas_prestadas'],
-            valor_total=row['valor_total']
-        ) for row in data
-    ]
+    # --- Monta o DTO (Data Transfer Object) ---
+    # Converte o 'Row' do SQLite (que não é JSON) para um dict padrão
+    # e calcula o saldo devedor
+    
+    lista_execucoes = []
+    for row in rows:
+        valor_total = row['valor_total']
+        total_pago = row['total_pago']
+        saldo_devedor = valor_total - total_pago
+        
+        lista_execucoes.append({
+            "id": row['execucao_id'], # O frontend espera 'id'
+            "produtor_id": row['produtor_id'], 
+            "servico_id": row['servico_id'],  
+            "data_execucao": row['data_execucao'],
+            "valor_total": valor_total,
+            "horas_prestadas": row['horas_prestadas'],
+            "produtor_nome": row['produtor_nome'],
+            "produtor_apelido": row['produtor_apelido'],
+            "servico_nome": row['servico_nome'],
+            "total_pago": total_pago,
+            "saldo_devedor": saldo_devedor
+            # NOTA: Não precisamos mais de produtor_id ou servico_id no frontend
+        })
+        
+    return lista_execucoes
+    
+def get_execucoes_count():
+    """ Retorna o número total de execuções cadastradas. """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) FROM execucoes")
+    total = cursor.fetchone()[0] # Pega o primeiro valor da primeira linha
+    
+    conn.close()
+    return total
 
 def create_execucao(execucao: Execucao):
     """

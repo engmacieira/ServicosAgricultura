@@ -4,20 +4,20 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
 
   // --- PRODUTORES ---
-  getProdutores: () => ipcRenderer.invoke('get-produtores'),
+  getProdutores: (page) => ipcRenderer.invoke('get-produtores', page), // <-- Aceita 'page'
   createProdutor: (produtorData) => ipcRenderer.invoke('create-produtor', produtorData),
   updateProdutor: (produtorId, produtorData) => ipcRenderer.invoke('update-produtor', produtorId, produtorData),
   deleteProdutor: (produtorId) => ipcRenderer.invoke('delete-produtor', produtorId),
 
   // --- SERVIÇOS ---
-  getServicos: () => ipcRenderer.invoke('get-servicos'),
+  getServicos: (page) => ipcRenderer.invoke('get-servicos', page), // <-- Aceita 'page'
   createServico: (servicoData) => ipcRenderer.invoke('create-servico', servicoData),
   updateServico: (servicoId, servicoData) => ipcRenderer.invoke('update-servico', servicoId, servicoData),
   deleteServico: (servicoId) => ipcRenderer.invoke('delete-servico', servicoId),
 
   // --- EXECUÇÕES ---
   createExecucao: (execucaoData) => ipcRenderer.invoke('create-execucao', execucaoData),
-  getExecucoes: () => ipcRenderer.invoke('get-execucoes'),
+  getExecucoes: (page) => ipcRenderer.invoke('get-execucoes', page), // <-- Aceita 'page'
   updateExecucao: (execucaoId, execucaoData) => ipcRenderer.invoke('update-execucao', execucaoId, execucaoData),
   deleteExecucao: (execucaoId) => ipcRenderer.invoke('delete-execucao', execucaoId),
 

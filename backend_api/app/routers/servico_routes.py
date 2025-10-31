@@ -1,5 +1,6 @@
 # app/routers/servico_routes.py
 from flask import Blueprint, jsonify, request
+import math
 from app.models.servico_model import Servico
 import app.repositories.servico_repository as servico_repository
 
@@ -8,16 +9,40 @@ servico_bp = Blueprint('servico_bp', __name__)
 
 
 # --- ROTA DE LEITURA (GET ALL) ---
+# CÓDIGO NOVO (com paginação)
 @servico_bp.route('/servicos', methods=['GET'])
 def get_servicos_api():
     """
-    Endpoint para LER (GET) todos os serviços.
+    Endpoint para LER (GET) todos os serviços (com paginação).
     """
-    # O Controlador chama o Repositório
-    servicos = servico_repository.get_all_servicos()
     
-    # Convertemos cada objeto Servico em um dicionário
-    return jsonify([s.to_dict() for s in servicos])
+    # 1. Lê os parâmetros da URL.
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
+    # 2. Busca o total de itens
+    total_items = servico_repository.get_servicos_count()
+    if total_items == 0:
+        return jsonify({
+            'servicos': [],
+            'total_pages': 0,
+            'current_page': 1,
+            'total_items': 0
+        })
+
+    # 3. Calcula o total de páginas
+    total_pages = math.ceil(total_items / per_page)
+    
+    # 4. Busca os serviços da PÁGINA ATUAL
+    servicos = servico_repository.get_all_servicos(page, per_page)
+    
+    # 5. Retorna o objeto de paginação completo
+    return jsonify({
+        'servicos': [s.to_dict() for s in servicos],
+        'total_pages': total_pages,
+        'current_page': page,
+        'total_items': total_items
+    }), 200
 
 
 # --- ROTA DE LEITURA (GET BY ID) ---

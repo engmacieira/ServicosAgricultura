@@ -7,6 +7,20 @@ let listaRelatorioDividas;
 // --- Handlers do Controlador ---
 let handlers = {};
 
+/**
+ * (NOVO) Helper para formatar data AAAA-MM-DD para DD/MM/AAAA
+ */
+function _formatarData(dataISO) {
+    if (!dataISO) return 'N/A';
+    try {
+        const [ano, mes, dia] = dataISO.split('-');
+        return `${dia}/${mes}/${ano}`;
+    } catch (e) {
+        console.error("Erro ao formatar data:", dataISO, e);
+        return dataISO; // Retorna a data original se falhar
+    }
+}
+
 function _inicializarDOM() {
     relatorioSelectProdutor = document.getElementById('relatorio-select-produtor');
     listaRelatorioDividas = document.getElementById('lista-relatorio-dividas');
@@ -81,7 +95,7 @@ export function desenharRelatorioDividas(dividas) {
         const saldoDevedor = divida.saldo_devedor.toFixed(2);
 
         item.innerHTML = `
-            <span><strong>Data:</strong> ${divida.data_execucao}</span>
+            <span><strong>Data:</strong> ${_formatarData(divida.data_execucao)}</span>
             <span><strong>Serviço:</strong> ${divida.servico_nome}</span>
             <span><strong>Valor Total:</strong> R$ ${valorTotal}</span>
             <span><strong>Valor Pago:</strong> R$ ${totalPago}</span>

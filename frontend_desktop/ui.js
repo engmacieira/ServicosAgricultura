@@ -29,7 +29,9 @@ export function inicializarApp(handlers) {
             onSaveProdutor: handlers.onSaveProdutor,
             onClearProdutor: handlers.onClearProdutor,
             onEditProdutor: handlers.onEditProdutor,
-            onDeleteProdutor: handlers.onDeleteProdutor
+            onDeleteProdutor: handlers.onDeleteProdutor,
+            onProdutorPaginaAnterior: handlers.onProdutorPaginaAnterior,
+            onProdutorPaginaProxima: handlers.onProdutorPaginaProxima
         });
 
         // 3. Inicializa o módulo de Serviços
@@ -37,7 +39,9 @@ export function inicializarApp(handlers) {
             onSaveServico: handlers.onSaveServico,
             onClearServico: handlers.onClearServico,
             onEditServico: handlers.onEditServico,
-            onDeleteServico: handlers.onDeleteServico
+            onDeleteServico: handlers.onDeleteServico,
+            onServicoPaginaAnterior: handlers.onServicoPaginaAnterior,
+            onServicoPaginaProxima: handlers.onServicoPaginaProxima
         });
 
         // 4. Inicializa o módulo de Agendamento
@@ -49,7 +53,10 @@ export function inicializarApp(handlers) {
         // 5. Inicializa o módulo de Histórico
         historicoUI.inicializar({
             onEditExecucao: handlers.onEditExecucao,
-            onDeleteExecucao: handlers.onDeleteExecucao
+            onDeleteExecucao: handlers.onDeleteExecucao,
+            onHistoricoPaginaAnterior: handlers.onHistoricoPaginaAnterior,
+            onHistoricoPaginaProxima: handlers.onHistoricoPaginaProxima
+
         });
 
         // 6. Inicializa o módulo de Pagamentos

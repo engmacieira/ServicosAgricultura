@@ -7,6 +7,9 @@ let servicoNomeInput;
 let servicoValorInput;
 let listaServicos;
 let servicoBtnLimpar;
+let servicoPaginationInfo;
+let servicoBtnAnterior;
+let servicoBtnProximo;
 
 // --- Handlers do Controlador ---
 let handlers = {};
@@ -18,6 +21,9 @@ function _inicializarDOM() {
     servicoValorInput = document.getElementById('servico-valor');
     listaServicos = document.getElementById('lista-servicos');
     servicoBtnLimpar = document.getElementById('servico-btn-limpar');
+    servicoPaginationInfo = document.getElementById('servico-pagination-info');
+    servicoBtnAnterior = document.getElementById('servico-btn-anterior');
+    servicoBtnProximo = document.getElementById('servico-btn-proximo');
     console.log("ServicoUI: Elementos DOM 'cacheados'.");
 }
 
@@ -34,6 +40,13 @@ function _vincularEventos() {
     } else {
         console.error("ServicoUI: Elemento 'servico-btn-limpar' não encontrado.");
     }
+    // NOVOS EVENTOS DE PAGINAÇÃO
+    if (servicoBtnAnterior) {
+        servicoBtnAnterior.addEventListener('click', handlers.onServicoPaginaAnterior);
+    }
+    if (servicoBtnProximo) {
+        servicoBtnProximo.addEventListener('click', handlers.onServicoPaginaProxima);
+    }
     console.log("ServicoUI: Eventos vinculados (se encontrados).");
 }
 
@@ -48,65 +61,72 @@ export function inicializar(externalHandlers) {
 }
 
 // --- Funções de Manipulação da UI (exportadas) ---
-export function desenharListaServicos(servicos) {
-    if (!listaServicos) {
-        console.error("ServicoUI: Elemento 'lista-servicos' não encontrado para desenhar.");
+// CÓDIGO NOVO (Aceita o objeto de paginação)
+export function desenharListaServicos(paginatedData) {
+    if (!listaServicos || !servicoPaginationInfo || !servicoBtnAnterior || !servicoBtnProximo) {
+        console.error("ServicoUI: Elementos da lista ou paginação não encontrados para desenhar.");
         return; 
     }
-    listaServicos.innerHTML = '';
+
+    // 1. Extrai os dados
+    const { servicos, total_pages, current_page } = paginatedData;
+
+    listaServicos.innerHTML = ''; // Limpa a lista
     
+    // 2. Desenha a lista
     if (!servicos || servicos.length === 0) { 
         listaServicos.innerHTML = '<li style="justify-content: center; background-color: var(--color-light-bg);">Nenhum serviço cadastrado.</li>'; 
-        return; 
+    } else {
+        servicos.forEach(servico => {
+            const item = document.createElement('li');
+            
+            // ... (Toda a lógica de criar 'infoContainer', 'actionsContainer', 'btnEditar', 'btnExcluir'...)
+            // ... (É A MESMA LÓGICA DE ANTES, APENAS COPIE E COLE)
+            const infoContainer = document.createElement('div');
+            infoContainer.classList.add('list-item-info');
+            
+            const mainInfo = document.createElement('div');
+            mainInfo.classList.add('list-item-main');
+            mainInfo.textContent = servico.nome; 
+
+            const secondaryInfo = document.createElement('div');
+            secondaryInfo.classList.add('list-item-secondary');
+            secondaryInfo.innerHTML = `
+                Valor Unitário: <strong>R$ ${servico.valor_unitario.toFixed(2)}</strong>
+                <span style="margin-left: 10px;">(ID: ${servico.id})</span>
+            `;
+
+            infoContainer.appendChild(mainInfo);
+            infoContainer.appendChild(secondaryInfo);
+
+            const actionsContainer = document.createElement('div');
+            actionsContainer.classList.add('list-item-actions');
+
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar'; 
+            btnEditar.classList.add('btn-secondary', 'btn-action');
+            btnEditar.onclick = () => handlers.onEditServico(servico); 
+
+            const btnExcluir = document.createElement('button');
+            btnExcluir.textContent = 'Excluir'; 
+            btnExcluir.classList.add('btn-delete', 'btn-action');
+            btnExcluir.onclick = () => handlers.onDeleteServico(servico.id); 
+
+            actionsContainer.appendChild(btnEditar);
+            actionsContainer.appendChild(btnExcluir);
+            
+            item.appendChild(infoContainer);
+            item.appendChild(actionsContainer);
+            // ... (Fim da lógica de criação do item)
+
+            listaServicos.appendChild(item);
+        });
     }
-    
-    servicos.forEach(servico => {
-        const item = document.createElement('li');
-        
-        // --- 1. Container de Informação (List Item Info) ---
-        const infoContainer = document.createElement('div');
-        infoContainer.classList.add('list-item-info');
-        
-        // Nome Principal
-        const mainInfo = document.createElement('div');
-        mainInfo.classList.add('list-item-main');
-        mainInfo.textContent = servico.nome; // Nome como título principal
 
-        // Informações Secundárias (Valor Unitário)
-        const secondaryInfo = document.createElement('div');
-        secondaryInfo.classList.add('list-item-secondary');
-        secondaryInfo.innerHTML = `
-            Valor Unitário: <strong>R$ ${servico.valor_unitario.toFixed(2)}</strong>
-            <span style="margin-left: 10px;">(ID: ${servico.id})</span>
-        `;
-
-        infoContainer.appendChild(mainInfo);
-        infoContainer.appendChild(secondaryInfo);
-
-        // --- 2. Container de Ações (Buttons) ---
-        const actionsContainer = document.createElement('div');
-        actionsContainer.classList.add('list-item-actions');
-
-        // Botão Editar
-        const btnEditar = document.createElement('button');
-        btnEditar.textContent = 'Editar'; 
-        btnEditar.classList.add('btn-secondary', 'btn-action');
-        btnEditar.onclick = () => handlers.onEditServico(servico); // Chama handler do renderer
-
-        // Botão Excluir
-        const btnExcluir = document.createElement('button');
-        btnExcluir.textContent = 'Excluir'; 
-        btnExcluir.classList.add('btn-delete', 'btn-action');
-        btnExcluir.onclick = () => handlers.onDeleteServico(servico.id); // Chama handler do renderer
-
-        actionsContainer.appendChild(btnEditar);
-        actionsContainer.appendChild(btnExcluir);
-        
-        // --- 3. Montagem Final do Item ---
-        item.appendChild(infoContainer);
-        item.appendChild(actionsContainer);
-        listaServicos.appendChild(item);
-    });
+    // 3. ATUALIZA OS CONTROLES DE PAGINAÇÃO
+    servicoPaginationInfo.textContent = `Página ${current_page} de ${total_pages || 1}`;
+    servicoBtnAnterior.disabled = (current_page <= 1);
+    servicoBtnProximo.disabled = (current_page >= total_pages);
 }
 
 export function limparFormularioServico() {

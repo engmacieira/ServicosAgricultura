@@ -7,13 +7,14 @@ class Produtor:
     como interagir com o banco de dados.
     """
     
-    def __init__(self, nome, cpf=None, regiao=None, referencia=None, 
+    def __init__(self, nome, apelido=None, cpf=None, regiao=None, referencia=None, 
                  telefone=None, produtor_id=None):
         """
         Este é o construtor do nosso objeto Produtor.
         """
         self.produtor_id = produtor_id
         self.nome = nome # Obrigatório (NOT NULL)
+        self.apelido = apelido
         self.cpf = cpf
         self.regiao = regiao
         self.referencia = referencia
@@ -32,6 +33,7 @@ class Produtor:
         return {
             'id': self.produtor_id,
             'nome': self.nome,
+            'apelido': self.apelido,
             'cpf': self.cpf,
             'regiao': self.regiao,
             'referencia': self.referencia,

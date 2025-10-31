@@ -205,6 +205,28 @@
         #relatorio-select-produtor { min-width: 300px; }
 
         #lista-historico span, #lista-pagamentos span, #lista-relatorio-dividas span { margin-right: 10px; }
+    
+        /* 6. Estilos de Paginação (NOVO) */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+            background-color: var(--color-light-bg);
+            border-radius: 0 0 8px 8px;
+        }
+        .pagination-info { 
+            font-size: 0.9em; 
+            color: #555;
+            font-weight: bold;
+        }
+        .pagination-buttons button { margin-left: 5px; }
+        .pagination-buttons button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -230,6 +252,10 @@
                         <div>
                             <label for="produtor-nome">Nome (*):</label>
                             <input type="text" id="produtor-nome" required>
+                        </div>
+                        <div>
+                            <label for="produtor-apelido">Apelido:</label>
+                            <input type="text" id="produtor-apelido">
                         </div>
                         <div>
                             <label for="produtor-cpf">CPF:</label>
@@ -258,6 +284,15 @@
                     <ul id="lista-produtores">
                         <li>Carregando...</li>
                     </ul>
+                    
+                    <div class="pagination-controls" id="produtor-pagination">
+                        <span class="pagination-info" id="produtor-pagination-info">Página 1 de 1</span>
+                        <div class="pagination-buttons">
+                            <button id="produtor-btn-anterior" class="btn-secondary" disabled>Anterior</button>
+                            <button id="produtor-btn-proximo" class="btn-secondary" disabled>Próximo</button>
+                        </div>
+                    </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -287,6 +322,15 @@
                     <ul id="lista-servicos">
                         <li>Carregando...</li>
                     </ul>
+
+                    <div class="pagination-controls" id="servico-pagination">
+                        <span class="pagination-info" id="servico-pagination-info">Página 1 de 1</span>
+                        <div class="pagination-buttons">
+                            <button id="servico-btn-anterior" class="btn-secondary" disabled>Anterior</button>
+                            <button id="servico-btn-proximo" class="btn-secondary" disabled>Próximo</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -314,8 +358,13 @@
                             <input type="date" id="agendamento-data" required>
                         </div>
                         <div>
-                            <label for="agendamento-horas">Horas Prestadas:</label>
-                            <input type="number" id="agendamento-horas" step="0.1" min="0" value="0.0">
+                            <label>Horas Prestadas (*):</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="agendamento-horas-h" min="0" value="0" style="flex: 1;"> 
+                                <span style="font-weight: bold;">H</span>
+                                <input type="number" id="agendamento-horas-m" min="0" max="59" step="1" value="0" style="flex: 1;"> 
+                                <span style="font-weight: bold;">Min</span>
+                            </div>
                         </div>
                         <div>
                             <label for="agendamento-valor">Valor Total (R$):</label>
@@ -335,6 +384,15 @@
             <ul id="lista-historico">
                 <li>Carregando histórico...</li>
             </ul>
+
+            <div class="pagination-controls" id="historico-pagination">
+                <span class="pagination-info" id="historico-pagination-info">Página 1 de 1</span>
+                <div class="pagination-buttons">
+                    <button id="historico-btn-anterior" class="btn-secondary" disabled>Anterior</button>
+                    <button id="historico-btn-proximo" class="btn-secondary" disabled>Próximo</button>
+                </div>
+            </div>
+
         </div>
 
         <div id="painel-pagamentos" class="tab-pane">
@@ -374,7 +432,17 @@
             <div id="pagamentos-coluna-detalhes">
                 <h2>Detalhes e Histórico</h2>
                 <div id="pagamentos-detalhes-execucao" style="display: none;">
+                    <p><strong>Produtor:</strong> <span id="detalhe-produtor-nome"></span></p>
+                    <p><strong>Serviço:</strong> <span id="detalhe-servico-nome"></span></p>
+                    <p><strong>Data:</strong> <span id="detalhe-data"></span></p>
+                    <p><strong>Valor Total:</strong> R$ <span id="detalhe-valor-total"></span></p>
+                    <p><strong>Total Pago:</strong> R$ <span id="detalhe-total-pago"></span></p>
+                    
+                    <div class="saldo-devedor-box">
+                        <span>Saldo Devedor:</span>
+                        <span>R$ <span id="detalhe-saldo-devedor">0.00</span></span>
                     </div>
+                </div>
                 <h3>Pagamentos Registrados</h3>
                 <ul id="lista-pagamentos">
                     <li>Selecione um agendamento para ver os pagamentos.</li>

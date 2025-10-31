@@ -1,5 +1,6 @@
 # app/routers/relatorio_routes.py
 from flask import Blueprint, jsonify, request
+import math
 import app.repositories.relatorio_repository as relatorio_repository
 import app.repositories.produtor_repository as produtor_repository # Para validar
 

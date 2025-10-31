@@ -8,10 +8,10 @@ const API_URL = 'http://127.0.0.1:5000';
 function registerServicoHandlers() {
 
     // --- GET ALL ---
-    ipcMain.handle('get-servicos', async () => {
+    ipcMain.handle('get-servicos', async (event, page) => { // <-- Recebe 'page'
         try {
-            // CORREÇÃO 2: Adicionar '/api' aqui
-            const response = await fetch(`${API_URL}/api/servicos`);
+            // Passa a página (ou 1 por padrão) e o limite de 10
+            const response = await fetch(`${API_URL}/api/servicos?page=${page || 1}&per_page=10`);
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();
         } catch (error) {

@@ -1,5 +1,6 @@
 # app/routers/execucao_routes.py
 from flask import Blueprint, jsonify, request
+import math # <-- ADICIONE ISSO
 from app.models.execucao_model import Execucao
 import app.repositories.execucao_repository as execucao_repository
 import app.repositories.produtor_repository as produtor_repository # Para checagem
@@ -10,14 +11,41 @@ execucao_bp = Blueprint('execucao_bp', __name__)
 
 
 # --- ROTA DE LEITURA (GET ALL) ---
+# CÓDIGO NOVO (com paginação)
 @execucao_bp.route('/execucoes', methods=['GET'])
 def get_execucoes_api():
     """
-    Endpoint para LER (GET) todas as execuções.
+    Endpoint para LER (GET) todas as execuções (com paginação).
     """
-    execucoes = execucao_repository.get_all_execucoes()
-    # Converte a lista de objetos em uma lista de dicionários
-    return jsonify([e.to_dict() for e in execucoes])
+    
+    # 1. Lê os parâmetros da URL.
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
+    # 2. Busca o total de itens
+    total_items = execucao_repository.get_execucoes_count()
+    if total_items == 0:
+        return jsonify({
+            'execucoes': [],
+            'total_pages': 0,
+            'current_page': 1,
+            'total_items': 0
+        })
+
+    # 3. Calcula o total de páginas
+    total_pages = math.ceil(total_items / per_page)
+    
+    # 4. Busca as execuções da PÁGINA ATUAL
+    execucoes = execucao_repository.get_all_execucoes(page, per_page)
+    
+    # 5. Retorna o objeto de paginação completo
+    # CÓDIGO NOVO (Não precisa mais de .to_dict())
+    return jsonify({
+        'execucoes': execucoes, # 'execucoes' já é uma lista de dicts
+        'total_pages': total_pages,
+        'current_page': page,
+        'total_items': total_items
+    }), 200
 
 
 # --- ROTA DE LEITURA (GET BY ID) ---

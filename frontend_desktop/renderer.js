@@ -14,40 +14,78 @@ let relatorioProdutoresCarregado = false;
 let cacheProdutores = []; 
 let cacheServicos = [];
 let cacheExecucoes = [];
+let cachePagamentosAtuais = [];
+let produtoresPaginaAtual = 1;
+let produtoresTotalPaginas = 1;
+let servicosPaginaAtual = 1;
+let servicosTotalPaginas = 1;
+let historicoPaginaAtual = 1;
+let historicoTotalPaginas = 1;
 
 // ======================================================
 // 1. HANDLERS DE LÓGICA - PRODUTORES
 // ======================================================
-async function carregarProdutores() {
+async function carregarProdutores(page = 1) {
     try {
-        cacheProdutores = await api.getProdutores(); 
-        ui.desenharListaProdutores(cacheProdutores);
+        console.log(`Buscando produtores - Página ${page}`);
+        // 1. Busca os dados paginados da API
+        const paginatedData = await api.getProdutores(page); 
+        
+        // 2. Atualiza nosso cache e estado
+        // (Nota: cacheProdutores agora só guarda os 10 itens da página atual)
+        cacheProdutores = paginatedData.produtores; 
+        produtoresPaginaAtual = paginatedData.current_page;
+        produtoresTotalPaginas = paginatedData.total_pages || 1;
+
+        // 3. Manda a UI desenhar a lista E os controles de paginação
+        ui.desenharListaProdutores(paginatedData);
+        
     } catch (error) {
         console.error("Erro ao carregar produtores:", error);
         alert("Falha grave ao buscar produtores.");
     }
 }
+// CÓDIGO NOVO (adaptado para paginação)
 async function handleSaveProdutor(event) {
     event.preventDefault(); 
     const id = ui.getIdProdutor();
     const dadosProdutor = ui.coletarDadosProdutor();
+    if (!dadosProdutor) return; 
+
     try {
+        let produtorSalvo;
         if (id) {
-            const atualizado = await api.updateProdutor(id, dadosProdutor);
-            if (!atualizado) throw new Error("API não retornou o produtor atualizado.");
-            alert(`Produtor "${atualizado.nome}" atualizado!`);
+            // --- LÓGICA DE UPDATE (EDIÇÃO) ---
+            produtorSalvo = await api.updateProdutor(id, dadosProdutor);
+            if (!produtorSalvo || produtorSalvo.error) throw new Error(produtorSalvo?.error || "API não retornou o produtor atualizado.");
+            
+            alert(`Produtor "${produtorSalvo.nome}" atualizado!`);
+            
+            // Recarrega a página ATUAL para refletir a mudança
+            await carregarProdutores(produtoresPaginaAtual); 
+            
         } else {
-            const novo = await api.createProdutor(dadosProdutor);
-            if (!novo) throw new Error("API não retornou o novo produtor.");
-            alert(`Produtor "${novo.nome}" criado com ID: ${novo.id}`);
+            // --- LÓGICA DE CREATE (NOVO) ---
+            produtorSalvo = await api.createProdutor(dadosProdutor);
+            if (!produtorSalvo || produtorSalvo.error) throw new Error(produtorSalvo?.error || "API não retornou o novo produtor.");
+            
+            alert(`Produtor "${produtorSalvo.nome}" criado com ID: ${produtorSalvo.id}`);
+            
+            // Recarrega a PÁGINA 1 (para mostrar o novo item)
+            await carregarProdutores(1); 
         }
+        
         ui.limparFormularioProdutor();
-        await carregarProdutores(); 
+        
+        // Invalida caches dependentes (correto)
         relatorioProdutoresCarregado = false;
         agendamentoDropdownsCarregados = false;
+        
     } catch (error) {
         console.error("Erro ao salvar produtor:", error);
-        alert("Falha ao salvar produtor.");
+        alert(`Falha ao salvar produtor: ${error.message}`);
+        // PLANO B: Se tudo falhar, recarrega
+        await carregarProdutores(produtoresPaginaAtual); 
     }
 }
 function handleClearProdutor() {
@@ -61,7 +99,7 @@ async function handleDeleteProdutor(id) {
         try {
             await api.deleteProdutor(id);
             alert(`Produtor ID ${id} excluído com sucesso.`);
-            await carregarProdutores(); 
+            await carregarProdutores(produtoresPaginaAtual);
             ui.limparFormularioProdutor();
             relatorioProdutoresCarregado = false;
         } catch (error) {
@@ -74,10 +112,20 @@ async function handleDeleteProdutor(id) {
 // ======================================================
 // 2. HANDLERS DE LÓGICA - SERVIÇOS
 // ======================================================
-async function carregarServicos() {
+async function carregarServicos(page = 1) {
      try {
-        cacheServicos = await api.getServicos(); 
-        ui.desenharListaServicos(cacheServicos);
+        console.log(`Buscando serviços - Página ${page}`);
+        // 1. Busca os dados paginados da API
+        const paginatedData = await api.getServicos(page);
+
+        // 2. Atualiza nosso cache e estado
+        cacheServicos = paginatedData.servicos; // Cache agora é só da página atual
+        servicosPaginaAtual = paginatedData.current_page;
+        servicosTotalPaginas = paginatedData.total_pages || 1;
+
+        // 3. Manda a UI desenhar
+        ui.desenharListaServicos(paginatedData);
+
     } catch (error) {
         console.error("Erro ao carregar serviços:", error);
         alert("Falha grave ao buscar serviços.");
@@ -87,22 +135,41 @@ async function handleSaveServico(event) {
     event.preventDefault();
     const id = ui.getIdServico();
     const dadosServico = ui.coletarDadosServico();
+    if (!dadosServico) return; // Proteção
+
     try {
+        let servicoSalvo;
         if (id) {
-            const atualizado = await api.updateServico(id, dadosServico);
-            if (!atualizado) throw new Error("API não retornou o serviço atualizado.");
-            alert(`Serviço "${atualizado.nome}" atualizado!`);
+            // --- LÓGICA DE UPDATE (EDIÇÃO) ---
+            servicoSalvo = await api.updateServico(id, dadosServico);
+            if (!servicoSalvo || servicoSalvo.error) throw new Error(servicoSalvo?.error || "API não retornou o serviço atualizado.");
+            
+            alert(`Serviço "${servicoSalvo.nome}" atualizado!`);
+
+            // Recarrega a página ATUAL
+            await carregarServicos(servicosPaginaAtual);
+            
         } else {
-            const novo = await api.createServico(dadosServico);
-            if (!novo) throw new Error("API não retornou o novo serviço.");
-            alert(`Serviço "${novo.nome}" criado com ID: ${novo.id}`);
+            // --- LÓGICA DE CREATE (NOVO) ---
+            servicoSalvo = await api.createServico(dadosServico);
+            if (!servicoSalvo || servicoSalvo.error) throw new Error(servicoSalvo?.error || "API não retornou o novo serviço.");
+            
+            alert(`Serviço "${servicoSalvo.nome}" criado com ID: ${servicoSalvo.id}`);
+
+            // Recarrega a PÁGINA 1
+            await carregarServicos(1);
         }
+        
         ui.limparFormularioServico();
-        await carregarServicos(); 
+        
+        // Invalida cache dependente
         agendamentoDropdownsCarregados = false;
+        
     } catch (error) {
         console.error("Erro ao salvar serviço:", error);
-        alert("Falha ao salvar serviço. (Verifique se o nome já existe)");
+        alert(`Falha ao salvar serviço: ${error.message}`);
+        // PLANO B: Recarrega do zero em caso de erro
+        await carregarServicos(servicosPaginaAtual);
     }
 }
 function handleClearServico() {
@@ -116,7 +183,7 @@ async function handleDeleteServico(id) {
         try {
             await api.deleteServico(id);
             alert(`Serviço ID ${id} excluído com sucesso.`);
-            await carregarServicos(); 
+            await carregarServicos(servicosPaginaAtual); // Recarrega a página atual
             ui.limparFormularioServico();
         } catch (error) {
             console.error(`Erro ao excluir serviço ${id}:`, error);
@@ -167,33 +234,22 @@ function handleClearAgendamento() {
 // ======================================================
 
 // Mark Construtor: Esta função foi restaurada após a exclusão acidental durante a refatoração.
-async function carregarExecucoes() {
-    console.log("Carregando Execuções...");
+// CÓDIGO NOVO (Backend já traz os nomes)
+async function carregarExecucoes(page = 1) {
+    console.log(`Carregando Execuções - Página ${page}`);
     try {
-        // Garantir que Produtores e Serviços estejam no cache para o mapeamento
-        // Usamos || (OU) para buscar apenas se o cache estiver vazio.
-        if (cacheProdutores.length === 0) {
-            cacheProdutores = await api.getProdutores();
-        }
-        if (cacheServicos.length === 0) {
-            cacheServicos = await api.getServicos();
-        }
+        // 1. Busca os dados paginados da API
+        // A API agora retorna tudo pronto!
+        const paginatedData = await api.getExecucoes(page);
 
-        const execucoes = await api.getExecucoes();
-        cacheExecucoes = execucoes;
+        // 2. Atualiza nosso estado (não precisamos mais de cacheExecucoes)
+        historicoPaginaAtual = paginatedData.current_page;
+        historicoTotalPaginas = paginatedData.total_pages || 1;
 
-        // Conceito de Mapeamento: Criação de Maps para lookup rápido do nome pelo ID
-        const produtoresMap = new Map(cacheProdutores.map(p => [p.id, p.nome]));
-        const servicosMap = new Map(cacheServicos.map(s => [s.id, s.nome]));
-
-        // Chamada para a UI desenhar a tabela com os dados.
-        ui.desenharListaExecucoes(cacheExecucoes, produtoresMap, servicosMap);
+        // 3. Manda a UI desenhar
+        // Não precisamos mais passar 'produtoresMap' ou 'servicosMap'
+        ui.desenharListaExecucoes(paginatedData);
         
-        // Tentativa de recarregar a seção de pagamentos, se necessário
-        if (ui.isPagamentoFormVisible()) {
-            carregarDadosPagamentos();
-        }
-
         console.log("Execuções carregadas e lista desenhada.");
 
     } catch (error) {
@@ -253,7 +309,7 @@ async function handleDeleteExecucao(id) {
             alert(`Agendamento ID ${id} excluído com sucesso.`);
             pagamentosDropdownCarregado = false; 
             historicoCarregadoPrimeiraVez = false; 
-            await carregarExecucoes(); 
+            await carregarExecucoes(historicoPaginaAtual); // Recarrega a página atual
         } catch (error) {
             console.error(`Erro ao excluir execução ${id}:`, error);
             alert(`Falha ao excluir agendamento: ${error.message}`);
@@ -302,8 +358,9 @@ async function handleExecucaoSelecionada(event) {
         const nomeProdutor = selectedOption.dataset.produtorNome;
         const nomeServico = selectedOption.dataset.servicoNome;
         const pagamentos = await api.getPagamentosPorExecucao(execucaoId);
-        ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, pagamentos);
-        ui.desenharListaPagamentos(pagamentos, handleEditPagamento, handleDeletePagamento);
+        cachePagamentosAtuais = pagamentos;
+        ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, cachePagamentosAtuais);
+        ui.desenharListaPagamentos(cachePagamentosAtuais, handleEditPagamento, handleDeletePagamento);
         ui.limparFormularioPagamento(); 
     } catch (error) {
         console.error(`Erro ao buscar pagamentos para execução ${execucaoId}:`, error);
@@ -312,6 +369,7 @@ async function handleExecucaoSelecionada(event) {
         ui.desenharListaPagamentos([], handleEditPagamento, handleDeletePagamento);
     }
 }
+// CÓDIGO NOVO (Otimizado)
 async function handleSavePagamento(event) {
     event.preventDefault();
     const idPagamento = ui.getIdPagamento();
@@ -319,30 +377,61 @@ async function handleSavePagamento(event) {
     if (!dadosPagamento) return;
 
     const execucaoIdSelecionada = document.getElementById('pagamentos-select-execucao').value;
-     if (!execucaoIdSelecionada) {
-         alert("Erro interno: Nenhuma execução selecionada para associar o pagamento.");
-         return;
-     }
+    if (!execucaoIdSelecionada) {
+        alert("Erro interno: Nenhuma execução selecionada para associar o pagamento.");
+        return;
+    }
+
     try {
-        let resultado;
+        let pagamentoSalvo;
         if (idPagamento) {
+            // 1. Salva na API
             console.log(`Atualizando pagamento ID: ${idPagamento}`);
-            resultado = await api.updatePagamento(idPagamento, dadosPagamento);
-             if (resultado && resultado.error) throw new Error(resultado.error);
-            if (!resultado) throw new Error("API não retornou o pagamento atualizado.");
-            alert(`Pagamento ID ${resultado.id} atualizado!`);
+            pagamentoSalvo = await api.updatePagamento(idPagamento, dadosPagamento);
+            if (pagamentoSalvo && pagamentoSalvo.error) throw new Error(pagamentoSalvo.error);
+            if (!pagamentoSalvo) throw new Error("API não retornou o pagamento atualizado.");
+            
+            // 2. OTIMIZAÇÃO: Atualiza o cache local
+            const index = cachePagamentosAtuais.findIndex(p => p.id == idPagamento);
+            if (index !== -1) {
+                cachePagamentosAtuais[index] = pagamentoSalvo;
+            }
+            alert(`Pagamento ID ${pagamentoSalvo.id} atualizado!`);
+
         } else {
-             console.log(`Criando pagamento para execução ID: ${execucaoIdSelecionada}`);
-             resultado = await api.createPagamento(execucaoIdSelecionada, dadosPagamento);
-             if (resultado && resultado.error) throw new Error(resultado.error);
-             if (!resultado) throw new Error("API não retornou o novo pagamento.");
-             alert(`Pagamento criado com ID: ${resultado.id}`);
+            // 1. Salva na API
+            console.log(`Criando pagamento para execução ID: ${execucaoIdSelecionada}`);
+            pagamentoSalvo = await api.createPagamento(execucaoIdSelecionada, dadosPagamento);
+            if (pagamentoSalvo && pagamentoSalvo.error) throw new Error(pagamentoSalvo.error);
+            if (!pagamentoSalvo) throw new Error("API não retornou o novo pagamento.");
+
+            // 2. OTIMIZAÇÃO: Adiciona ao cache local
+            cachePagamentosAtuais.push(pagamentoSalvo);
+            alert(`Pagamento criado com ID: ${pagamentoSalvo.id}`);
         }
-        await refreshPagamentosVisiveis();
+
+        // --- OTIMIZAÇÃO: Redesenha tudo a partir do cache (INSTANTÂNEO) ---
+        
+        // 3. Pega os dados da execução que já estão no <select>
+        const selectElement = document.getElementById('pagamentos-select-execucao');
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const execucao = JSON.parse(selectedOption.dataset.execucao);
+        const nomeProdutor = selectedOption.dataset.produtorNome;
+        const nomeServico = selectedOption.dataset.servicoNome;
+
+        // 4. Redesenha o sumário (Total Pago, Saldo) e a lista USANDO O CACHE MODIFICADO
+        ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, cachePagamentosAtuais);
+        ui.desenharListaPagamentos(cachePagamentosAtuais, handleEditPagamento, handleDeletePagamento);
+
         ui.limparFormularioPagamento();
+        // --- FIM DA OTIMIZAÇÃO ---
+
     } catch (error) {
         console.error("Erro ao salvar pagamento:", error);
         alert(`Falha ao salvar pagamento: ${error.message}`);
+        
+        // PLANO B: Se a otimização falhar, força o recarregamento
+        await refreshPagamentosVisiveis();
     }
 }
 function handleClearPagamento() {
@@ -352,18 +441,39 @@ function handleEditPagamento(pagamento) {
     console.log("Editando pagamento:", pagamento);
     ui.preencherFormularioPagamento(pagamento);
 }
+// CÓDIGO NOVO (Otimizado)
 async function handleDeletePagamento(id) {
-     if (confirm(`Tem certeza que deseja excluir o pagamento ID ${id}?`)) {
+    if (confirm(`Tem certeza que deseja excluir o pagamento ID ${id}?`)) {
         try {
             console.log(`Excluindo pagamento ID: ${id}`);
             const resultado = await api.deletePagamento(id);
             if (resultado && resultado.error) throw new Error(resultado.error);
             alert(`Pagamento ID ${id} excluído com sucesso.`);
-             await refreshPagamentosVisiveis();
-             ui.limparFormularioPagamento();
+
+            // --- OTIMIZAÇÃO: Atualiza o cache local ---
+            
+            // 1. Remove o item do cache
+            cachePagamentosAtuais = cachePagamentosAtuais.filter(p => p.id != id);
+
+            // 2. Pega os dados da execução que já estão no <select>
+            const selectElement = document.getElementById('pagamentos-select-execucao');
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const execucao = JSON.parse(selectedOption.dataset.execucao);
+            const nomeProdutor = selectedOption.dataset.produtorNome;
+            const nomeServico = selectedOption.dataset.servicoNome;
+
+            // 3. Redesenha o sumário (Total Pago) e a lista USANDO O CACHE MODIFICADO
+            ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, cachePagamentosAtuais);
+            ui.desenharListaPagamentos(cachePagamentosAtuais, handleEditPagamento, handleDeletePagamento);
+            // --- FIM DA OTIMIZAÇÃO ---
+
+            ui.limparFormularioPagamento();
+
         } catch (error) {
             console.error(`Erro ao excluir pagamento ${id}:`, error);
             alert(`Falha ao excluir pagamento: ${error.message}`);
+            // PLANO B: Se a otimização falhar, força o recarregamento
+            await refreshPagamentosVisiveis();
         }
     }
 }
@@ -426,6 +536,44 @@ async function handleRelatorioProdutorSelecionado(event) {
     }
 }
 
+// ======================================================
+// 6.5. HANDLERS DE PAGINAÇÃO (NOVOS)
+// ======================================================
+async function handleProdutorPaginaProxima() {
+    if (produtoresPaginaAtual < produtoresTotalPaginas) {
+        await carregarProdutores(produtoresPaginaAtual + 1);
+    }
+}
+
+async function handleProdutorPaginaAnterior() {
+    if (produtoresPaginaAtual > 1) {
+        await carregarProdutores(produtoresPaginaAtual - 1);
+    }
+}
+
+async function handleServicoPaginaProxima() {
+    if (servicosPaginaAtual < servicosTotalPaginas) {
+        await carregarServicos(servicosPaginaAtual + 1);
+    }
+}
+
+async function handleServicoPaginaAnterior() {
+    if (servicosPaginaAtual > 1) {
+        await carregarServicos(servicosPaginaAtual - 1);
+    }
+}
+
+async function handleHistoricoPaginaProxima() {
+    if (historicoPaginaAtual < historicoTotalPaginas) {
+        await carregarExecucoes(historicoPaginaAtual + 1);
+    }
+}
+
+async function handleHistoricoPaginaAnterior() {
+    if (historicoPaginaAtual > 1) {
+        await carregarExecucoes(historicoPaginaAtual - 1);
+    }
+}
 
 // ======================================================
 // 7. INICIALIZAÇÃO E EVENTOS (A "COLA")
@@ -472,22 +620,30 @@ ui.inicializarApp({
     // --- Handlers de Ação de Produtores Adicionados ---
     onEditProdutor: handleEditProdutor,
     onDeleteProdutor: handleDeleteProdutor,
+    onProdutorPaginaAnterior: handleProdutorPaginaAnterior,
+    onProdutorPaginaProxima: handleProdutorPaginaProxima,
     // ----------------------------------------------------
     onSaveServico: handleSaveServico,
     onClearServico: handleClearServico,
     // --- Handlers de Ação de Serviços Adicionados ---
     onEditServico: handleEditServico,
     onDeleteServico: handleDeleteServico,
+    onServicoPaginaAnterior: handleServicoPaginaAnterior,
+    onServicoPaginaProxima: handleServicoPaginaProxima,
     // ------------------------------------------------
     onSaveExecucao: handleSaveExecucao,
     onClearAgendamento: handleClearAgendamento,
     // --- Handlers de Ação de Histórico Adicionados ---
     onEditExecucao: handleEditExecucao,
     onDeleteExecucao: handleDeleteExecucao,
+    onHistoricoPaginaAnterior: handleHistoricoPaginaAnterior,
+    onHistoricoPaginaProxima: handleHistoricoPaginaProxima,
     // ---------------------------------------------------
     onExecucaoSelecionada: handleExecucaoSelecionada,
     onSavePagamento: handleSavePagamento,
     onClearPagamento: handleClearPagamento,
     onCancelEditPagamento: handleCancelEditPagamento,
+    onEditPagamento: handleEditPagamento,
+    onDeletePagamento: handleDeletePagamento,
     onRelatorioProdutorSelecionado: handleRelatorioProdutorSelecionado
 });

@@ -1,19 +1,16 @@
 import sqlite3
-import os # Vamos usar a lib 'os' para verificar se o DB já existe
+import os
 
-# Define o nome do arquivo do banco
 DB_NAME = 'gestao.db'
 
 # --- SQL para Criação das Tabelas ---
-
-# Usamos """ (aspas triplas) para escrever SQL em múltiplas linhas.
-# IF NOT EXISTS: é uma boa prática. Evita erro se a tabela já existir.
-
+# (Já atualizado com 'apelido' para NOVOS bancos)
 SQL_CREATE_PRODUTORES = """
 CREATE TABLE IF NOT EXISTS produtores (
     produtor_id INTEGER PRIMARY KEY AUTOINCREMENT,
     cpf TEXT UNIQUE,
     nome TEXT NOT NULL, 
+    apelido TEXT, /* <-- Nossa nova coluna */
     regiao TEXT,
     referencia TEXT,
     telefone TEXT
@@ -37,8 +34,6 @@ CREATE TABLE IF NOT EXISTS execucoes (
     valor_total REAL NOT NULL DEFAULT 0.0,
     data_execucao TEXT NOT NULL,
     
-    -- Definindo as Chaves Estrangeiras (FKs)
-    -- ON DELETE RESTRICT: Impede apagar um produtor se ele tiver execuções
     FOREIGN KEY (produtor_id) REFERENCES produtores (produtor_id) ON DELETE RESTRICT,
     FOREIGN KEY (servico_id) REFERENCES servicos (servico_id) ON DELETE RESTRICT
 );
@@ -51,28 +46,19 @@ CREATE TABLE IF NOT EXISTS pagamentos (
     valor_pago REAL NOT NULL,
     data_pagamento TEXT NOT NULL,
     
-    -- Se uma execução for deletada (o que não deve acontecer facilmente),
-    -- os pagamentos somem junto (CASCADE)
     FOREIGN KEY (execucao_id) REFERENCES execucoes (execucao_id) ON DELETE CASCADE
 );
 """
 
 def setup_database():
     """
-    Função principal para criar o banco e as tabelas.
+    Função principal para criar o banco e as tabelas (se não existirem).
     """
-    
-    # Verifica se o banco já existe para não printar "criado" toda vez
     db_exists = os.path.exists(DB_NAME)
-    
-    conn = None # Inicializa a conexão como nula
+    conn = None
     try:
-        # 1. Conecta (ou cria) o banco de dados
         conn = sqlite3.connect(DB_NAME)
-        
-        # Habilita o suporte a chaves estrangeiras (importante!)
         conn.execute("PRAGMA foreign_keys = ON;")
-        
         cursor = conn.cursor()
         
         if not db_exists:
@@ -80,7 +66,6 @@ def setup_database():
         else:
             print(f"Conectado ao banco '{DB_NAME}'...")
 
-        # 2. Executa os comandos de criação de tabela
         cursor.execute(SQL_CREATE_PRODUTORES)
         print("Tabela 'produtores' verificada/criada.")
         
@@ -93,7 +78,6 @@ def setup_database():
         cursor.execute(SQL_CREATE_PAGAMENTOS)
         print("Tabela 'pagamentos' verificada/criada.")
 
-        # 3. Salva (comita) as mudanças no banco
         conn.commit()
         
         if not db_exists:
@@ -101,16 +85,60 @@ def setup_database():
 
     except sqlite3.Error as e:
         print(f"Erro ao configurar o banco de dados: {e}")
-        # Se deu erro, desfazemos qualquer mudança pendente
         if conn:
             conn.rollback()
             
     finally:
-        # 4. Fecha a conexão (independentemente de ter dado erro ou não)
+        if conn:
+            conn.close()
+            # Não printa "fechado" aqui, deixa a migração fazer isso
+
+# --- NOSSA NOVA FUNÇÃO DE MIGRAÇÃO ---
+def run_migrations():
+    """
+    Verifica e aplica alterações de schema (migrações) 
+    em um banco de dados existente.
+    """
+    print("Verificando migrações pendentes...")
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        
+        # Isso faz o SQLite nos retornar dicionários
+        conn.row_factory = sqlite3.Row 
+        cursor = conn.cursor()
+
+        # --- Migração 1: Adicionar 'apelido' a 'produtores' ---
+        
+        # 1. Verifica quais colunas existem em 'produtores'
+        cursor.execute("PRAGMA table_info(produtores)")
+        columns = [row['name'] for row in cursor.fetchall()]
+        
+        # 2. Se 'apelido' NÃO estiver na lista, adiciona
+        if 'apelido' not in columns:
+            print("... Migração pendente: Adicionando 'apelido' a 'produtores'.")
+            
+            # 3. Executa o comando de alteração NÃO DESTRUTIVO
+            cursor.execute("ALTER TABLE produtores ADD COLUMN apelido TEXT")
+            conn.commit()
+            print("... Migração 'apelido' concluída com sucesso!")
+        else:
+            print("... Coluna 'apelido' já existe. Nenhuma migração necessária.")
+
+        # (Aqui poderíamos adicionar futuras migrações, ex: if 'outra_coluna' ...)
+
+    except sqlite3.Error as e:
+        print(f"Erro ao rodar migrações: {e}")
+        if conn:
+            conn.rollback()
+            
+    finally:
         if conn:
             conn.close()
             print("Conexão com o banco fechada.")
 
-# 5. Executa a função de setup
+
+# 5. Executa a função de setup E DEPOIS a de migração
 if __name__ == "__main__":
-    setup_database()
+    setup_database()  # Garante que as tabelas existam
+    run_migrations()  # Garante que as colunas estejam atualizadas

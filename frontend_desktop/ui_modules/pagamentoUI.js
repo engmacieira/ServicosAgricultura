@@ -105,11 +105,21 @@ export function popularDropdownExecucoesPagamentos(execucoes, produtoresMap = {}
     }
 }
 
+// CÓDIGO CORRETO:
 function mostrarAreaDetalhesPagamento(mostrar) {
     if (!pagamentosDetalhesDiv || !pagamentoForm || !pagamentoFormPlaceholder || !listaPagamentosUl) return;
+
+    // 1. Mostra/Esconde a coluna da DIREITA (Detalhes)
     pagamentosDetalhesDiv.style.display = mostrar ? 'block' : 'none';
+
+    // 2. Mostra/Esconde o FORMULÁRIO (na coluna da ESQUERDA)
+    // Se mostrar=true, form fica 'block'
     pagamentoForm.style.display = mostrar ? 'block' : 'none';
+
+    // 3. Mostra/Esconde o PLACEHOLDER (na coluna da ESQUERDA)
+    // Se mostrar=true, placeholder fica 'none' (some)
     pagamentoFormPlaceholder.style.display = mostrar ? 'none' : 'block';
+
     if (!mostrar) {
         listaPagamentosUl.innerHTML = '<li>Selecione um agendamento para ver os pagamentos.</li>';
     }

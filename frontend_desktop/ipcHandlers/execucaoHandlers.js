@@ -33,10 +33,10 @@ function registerExecucaoHandlers() {
     });
 
     // --- GET ALL ---
-    ipcMain.handle('get-execucoes', async () => {
+    ipcMain.handle('get-execucoes', async (event, page) => { // <-- Recebe 'page'
         try {
-            // Mark Construtor: CORREÇÃO 2 - Adicionado /api
-            const response = await fetch(`${API_URL}/api/execucoes`); // Chama GET /api/execucoes
+            // Passa a página (ou 1 por padrão) e o limite de 10
+            const response = await fetch(`${API_URL}/api/execucoes?page=${page || 1}&per_page=10`);
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();
         } catch (error) {

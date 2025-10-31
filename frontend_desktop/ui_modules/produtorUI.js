@@ -4,12 +4,16 @@
 let produtorForm;
 let produtorIdInput;
 let produtorNomeInput;
+let produtorApelidoInput;
 let produtorCpfInput;
 let produtorRegiaoInput;
 let produtorReferenciaInput;
 let produtorTelefoneInput;
 let listaProdutores;
 let produtorBtnLimpar;
+let produtorPaginationInfo;
+let produtorBtnAnterior;
+let produtorBtnProximo;
 
 // --- Handlers do Controlador ---
 let handlers = {};
@@ -18,12 +22,16 @@ function _inicializarDOM() {
     produtorForm = document.getElementById('produtor-form');
     produtorIdInput = document.getElementById('produtor-id');
     produtorNomeInput = document.getElementById('produtor-nome');
+    produtorApelidoInput = document.getElementById('produtor-apelido');
     produtorCpfInput = document.getElementById('produtor-cpf');
     produtorRegiaoInput = document.getElementById('produtor-regiao');
     produtorReferenciaInput = document.getElementById('produtor-referencia');
     produtorTelefoneInput = document.getElementById('produtor-telefone');
     listaProdutores = document.getElementById('lista-produtores');
     produtorBtnLimpar = document.getElementById('produtor-btn-limpar');
+    produtorPaginationInfo = document.getElementById('produtor-pagination-info');
+    produtorBtnAnterior = document.getElementById('produtor-btn-anterior');
+    produtorBtnProximo = document.getElementById('produtor-btn-proximo');
     console.log("ProdutorUI: Elementos DOM 'cacheados'.");
 }
 
@@ -34,6 +42,15 @@ function _vincularEventos() {
     }
     produtorForm.addEventListener('submit', handlers.onSaveProdutor);
     produtorBtnLimpar.addEventListener('click', handlers.onClearProdutor);
+
+    // NOVOS EVENTOS DE PAGINAÇÃO
+    if (produtorBtnAnterior) {
+        produtorBtnAnterior.addEventListener('click', handlers.onProdutorPaginaAnterior);
+    }
+    if (produtorBtnProximo) {
+        produtorBtnProximo.addEventListener('click', handlers.onProdutorPaginaProxima);
+    }
+
     console.log("ProdutorUI: Eventos vinculados.");
 }
 
@@ -48,71 +65,81 @@ export function inicializar(externalHandlers) {
 }
 
 // --- Funções de Manipulação da UI (exportadas) ---
-export function desenharListaProdutores(produtores) {
-    if (!listaProdutores) return; // Proteção
-    listaProdutores.innerHTML = '';
-    
-    if (!produtores || produtores.length === 0) { 
-        // Adapta o item vazio para o novo estilo de lista
-        listaProdutores.innerHTML = '<li style="justify-content: center; background-color: var(--color-light-bg);">Nenhum produtor cadastrado.</li>'; 
-        return; 
+// CÓDIGO NOVO (Aceita o objeto de paginação)
+export function desenharListaProdutores(paginatedData) {
+    if (!listaProdutores || !produtorPaginationInfo || !produtorBtnAnterior || !produtorBtnProximo) {
+        console.error("ProdutorUI: Elementos da lista ou paginação não encontrados.");
+        return;
     }
+
+    // 1. Extrai os dados da resposta da API
+    const { produtores, total_pages, current_page } = paginatedData;
+
+    listaProdutores.innerHTML = ''; // Limpa a lista
     
-    produtores.forEach(produtor => {
-        const item = document.createElement('li');
-        
-        // --- 1. Container de Informação (List Item Info) ---
-        const infoContainer = document.createElement('div');
-        infoContainer.classList.add('list-item-info');
-        
-        // Nome Principal
-        const mainInfo = document.createElement('div');
-        mainInfo.classList.add('list-item-main');
-        mainInfo.textContent = produtor.nome; // Nome como título principal
+    // 2. Desenha a lista (lógica antiga, movida para cá)
+    if (!produtores || produtores.length === 0) { 
+        listaProdutores.innerHTML = '<li style="justify-content: center; background-color: var(--color-light-bg);">Nenhum produtor cadastrado.</li>';
+    } else {
+        produtores.forEach(produtor => {
+            const item = document.createElement('li');
+            
+            const infoContainer = document.createElement('div');
+            infoContainer.classList.add('list-item-info');
+            
+            const mainInfo = document.createElement('div');
+            mainInfo.classList.add('list-item-main');
+            mainInfo.textContent = produtor.nome; 
 
-        // Informações Secundárias (CPF e Região)
-        const secondaryInfo = document.createElement('div');
-        secondaryInfo.classList.add('list-item-secondary');
-        secondaryInfo.innerHTML = `
-            CPF: ${produtor.cpf || 'N/A'} 
-            | Região: ${produtor.regiao || 'N/A'}
-            | Telefone: ${produtor.telefone || 'N/A'}
-            <span style="margin-left: 10px;">(ID: ${produtor.id})</span>
-        `;
+            const secondaryInfo = document.createElement('div');
+            secondaryInfo.classList.add('list-item-secondary');
+            secondaryInfo.innerHTML = `
+                Apelido: <strong>${produtor.apelido || 'N/A'}</strong>
+                | Região: ${produtor.regiao || 'N/A'}
+                | Telefone: ${produtor.telefone || 'N/A'}
+                <span style="margin-left: 10px;">(ID: ${produtor.id})</span>
+            `;
 
-        infoContainer.appendChild(mainInfo);
-        infoContainer.appendChild(secondaryInfo);
+            infoContainer.appendChild(mainInfo);
+            infoContainer.appendChild(secondaryInfo);
 
-        // --- 2. Container de Ações (Buttons) ---
-        const actionsContainer = document.createElement('div');
-        actionsContainer.classList.add('list-item-actions');
+            const actionsContainer = document.createElement('div');
+            actionsContainer.classList.add('list-item-actions');
 
-        // Botão Editar
-        const btnEditar = document.createElement('button');
-        btnEditar.textContent = 'Editar'; 
-        btnEditar.classList.add('btn-secondary', 'btn-action');
-        btnEditar.onclick = () => handlers.onEditProdutor(produtor); 
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar'; 
+            btnEditar.classList.add('btn-secondary', 'btn-action');
+            btnEditar.onclick = () => handlers.onEditProdutor(produtor); 
 
-        // Botão Excluir
-        const btnExcluir = document.createElement('button');
-        btnExcluir.textContent = 'Excluir'; 
-        btnExcluir.classList.add('btn-delete', 'btn-action');
-        btnExcluir.onclick = () => handlers.onDeleteProdutor(produtor.id);
+            const btnExcluir = document.createElement('button');
+            btnExcluir.textContent = 'Excluir'; 
+            btnExcluir.classList.add('btn-delete', 'btn-action');
+            btnExcluir.onclick = () => handlers.onDeleteProdutor(produtor.id);
 
-        actionsContainer.appendChild(btnEditar);
-        actionsContainer.appendChild(btnExcluir);
-        
-        // --- 3. Montagem Final do Item ---
-        item.appendChild(infoContainer);
-        item.appendChild(actionsContainer);
-        listaProdutores.appendChild(item);
-    });
+            actionsContainer.appendChild(btnEditar);
+            actionsContainer.appendChild(btnExcluir);
+            
+            item.appendChild(infoContainer);
+            item.appendChild(actionsContainer);
+            listaProdutores.appendChild(item);
+        });
+    }
+
+    // 3. ATUALIZA OS CONTROLES DE PAGINAÇÃO
+    produtorPaginationInfo.textContent = `Página ${current_page} de ${total_pages || 1}`;
+    
+    // Desabilita botão "Anterior" se estiver na primeira página
+    produtorBtnAnterior.disabled = (current_page <= 1);
+    
+    // Desabilita botão "Próximo" se estiver na última página
+    produtorBtnProximo.disabled = (current_page >= total_pages);
 }
 
 export function limparFormularioProdutor() {
     if (!produtorForm) return;
     produtorIdInput.value = '';
     produtorNomeInput.value = '';
+    produtorApelidoInput.value = '';
     produtorCpfInput.value = '';
     produtorRegiaoInput.value = '';
     produtorReferenciaInput.value = '';
@@ -124,6 +151,7 @@ export function preencherFormularioProdutor(produtor) {
     if (!produtorForm) return;
     produtorIdInput.value = produtor.id;
     produtorNomeInput.value = produtor.nome;
+    produtorApelidoInput.value = produtor.apelido || '';
     produtorCpfInput.value = produtor.cpf || '';
     produtorRegiaoInput.value = produtor.regiao || '';
     produtorReferenciaInput.value = produtor.referencia || '';
@@ -139,6 +167,7 @@ export function coletarDadosProdutor() {
     }
     return {
         nome: produtorNomeInput.value,
+        apelido: produtorApelidoInput.value || null,
         cpf: produtorCpfInput.value || null,
         regiao: produtorRegiaoInput.value || null,
         referencia: produtorReferenciaInput.value || null,

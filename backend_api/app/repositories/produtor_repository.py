@@ -26,26 +26,30 @@ def get_produtor_by_id(produtor_id):
     return Produtor(
         produtor_id=data['produtor_id'],
         nome=data['nome'],
+        apelido=data['apelido'],
         cpf=data['cpf'],
         regiao=data['regiao'],
         referencia=data['referencia'],
         telefone=data['telefone']
     )
 
-# --- NOVO CÓDIGO (Listar Todos) ---
-
-def get_all_produtores():
+# CÓDIGO NOVO (com paginação)
+def get_all_produtores(page: int, per_page: int):
     """
-    (R)ead: Busca *todos* os Produtores no banco.
+    (R)ead: Busca Produtores no banco com paginação.
     Retorna uma *lista* de objetos Produtor, ordenados por nome.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Mark Construtor: Exatamente como você pediu na "User Story",
-    # estamos ordenando por nome (ordem alfabética).
-    cursor.execute("SELECT * FROM produtores ORDER BY nome")
-    data = cursor.fetchall() # Pega todos os resultados
+    # 1. Calcula o OFFSET (quantos pular)
+    offset = (page - 1) * per_page
+    
+    # 2. SQL com LIMIT (quantos pegar) e OFFSET (quantos pular)
+    sql = "SELECT * FROM produtores ORDER BY nome LIMIT ? OFFSET ?"
+    
+    cursor.execute(sql, (per_page, offset))
+    data = cursor.fetchall() # Pega apenas a página atual
     
     conn.close()
     
@@ -54,12 +58,25 @@ def get_all_produtores():
         Produtor(
             produtor_id=row['produtor_id'],
             nome=row['nome'],
+            apelido=row['apelido'],
             cpf=row['cpf'],
             regiao=row['regiao'],
             referencia=row['referencia'],
             telefone=row['telefone']
         ) for row in data
     ]
+
+def get_produtores_count():
+    """ Retorna o número total de produtores cadastrados. """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Conta o total de linhas na tabela
+    cursor.execute("SELECT COUNT(*) FROM produtores")
+    total = cursor.fetchone()[0] # Pega o primeiro valor da primeira linha
+    
+    conn.close()
+    return total
 
 def create_produtor(produtor: Produtor):
     """
@@ -70,12 +87,11 @@ def create_produtor(produtor: Produtor):
     cursor = conn.cursor()
     
     sql = """
-        INSERT INTO produtores (nome, cpf, regiao, referencia, telefone)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO produtores (nome, apelido, cpf, regiao, referencia, telefone)
+        VALUES (?, ?, ?, ?, ?, ?)
     """
     
-    cursor.execute(sql, (produtor.nome, produtor.cpf, produtor.regiao, 
-                         produtor.referencia, produtor.telefone))
+    cursor.execute(sql, (produtor.nome, produtor.apelido, produtor.cpf, produtor.regiao, produtor.referencia, produtor.telefone))
     
     # 💡 Dica: Atualizamos o objeto original com o ID
     # que o banco gerou (autoincrement).
@@ -97,13 +113,14 @@ def update_produtor(produtor: Produtor):
 
     sql = """
         UPDATE produtores 
-        SET nome = ?, cpf = ?, regiao = ?, referencia = ?, telefone = ?
+        SET nome = ?, apelido = ?, cpf = ?, regiao = ?, referencia = ?, telefone = ?
         WHERE produtor_id = ?
     """
     
     # A ordem dos parâmetros é crucial e deve bater com o SQL
     params = (
-        produtor.nome, 
+        produtor.nome,
+        produtor.apelido, 
         produtor.cpf, 
         produtor.regiao, 
         produtor.referencia, 

@@ -8,10 +8,10 @@ const API_URL = 'http://127.0.0.1:5000';
 function registerProdutorHandlers() {
 
     // --- GET ALL ---
-    ipcMain.handle('get-produtores', async () => {
+    ipcMain.handle('get-produtores', async (event, page) => {
         try {
             // CORREÇÃO 2: Adicionar '/api' aqui
-            const response = await fetch(`${API_URL}/api/produtores`);
+            const response = await fetch(`${API_URL}/api/produtores?page=${page || 1}&per_page=10`);
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();
         } catch (error) {
