@@ -122,10 +122,83 @@ def run_migrations():
             cursor.execute("ALTER TABLE produtores ADD COLUMN apelido TEXT")
             conn.commit()
             print("... Migração 'apelido' concluída com sucesso!")
+        # (O bloco de verificação do 'apelido' deve terminar aqui)
         else:
             print("... Coluna 'apelido' já existe. Nenhuma migração necessária.")
 
-        # (Aqui poderíamos adicionar futuras migrações, ex: if 'outra_coluna' ...)
+        # --- Migração 2: Adicionar 'deletado_em' a 'produtores' ---
+        
+        # 1. Verifica as colunas de 'produtores' novamente
+        #    (Não precisamos re-executar, podemos reusar a variável 'columns')
+        
+        # 2. Se 'deletado_em' NÃO estiver na lista, adiciona
+        if 'deletado_em' not in columns:
+            print("... Migração pendente: Adicionando 'deletado_em' a 'produtores'.")
+            
+            # 3. Executa o comando de alteração NÃO DESTRUTIVO
+            #    DEFAULT NULL significa que todos os registros existentes
+            #    (que não foram deletados) terão essa coluna como 'Nula'
+            cursor.execute("ALTER TABLE produtores ADD COLUMN deletado_em TEXT DEFAULT NULL")
+            conn.commit()
+            print("... Migração 'deletado_em' concluída com sucesso!")
+        # (O bloco de verificação do 'produtores.deletado_em' deve terminar aqui)
+        else:
+            print("... Coluna 'deletado_em' em 'produtores' já existe.")
+
+        # --- Migração 3: Adicionar 'deletado_em' a 'servicos' ---
+        
+        # 1. Verifica quais colunas existem em 'servicos'
+        cursor.execute("PRAGMA table_info(servicos)")
+        servicos_columns = [row['name'] for row in cursor.fetchall()]
+        
+        # 2. Se 'deletado_em' NÃO estiver na lista, adiciona
+        if 'deletado_em' not in servicos_columns:
+            print("... Migração pendente: Adicionando 'deletado_em' a 'servicos'.")
+            
+            # 3. Executa o comando de alteração NÃO DESTRUTIVO
+            cursor.execute("ALTER TABLE servicos ADD COLUMN deletado_em TEXT DEFAULT NULL")
+            conn.commit()
+            print("... Migração 'servicos.deletado_em' concluída com sucesso!")
+        # (O bloco de verificação do 'servicos.deletado_em' deve terminar aqui)
+        else:
+            print("... Coluna 'deletado_em' em 'servicos' já existe.")
+
+        # --- Migração 4: Adicionar 'deletado_em' a 'execucoes' ---
+        
+        # 1. Verifica quais colunas existem em 'execucoes'
+        cursor.execute("PRAGMA table_info(execucoes)")
+        execucoes_columns = [row['name'] for row in cursor.fetchall()]
+        
+        # 2. Se 'deletado_em' NÃO estiver na lista, adiciona
+        if 'deletado_em' not in execucoes_columns:
+            print("... Migração pendente: Adicionando 'deletado_em' a 'execucoes'.")
+            
+            # 3. Executa o comando de alteração NÃO DESTRUTIVO
+            cursor.execute("ALTER TABLE execucoes ADD COLUMN deletado_em TEXT DEFAULT NULL")
+            conn.commit()
+            print("... Migração 'execucoes.deletado_em' concluída com sucesso!")
+        # (O bloco de verificação do 'execucoes.deletado_em' deve terminar aqui)
+        else:
+            print("... Coluna 'deletado_em' em 'execucoes' já existe.")
+
+        # --- Migração 5: Adicionar 'deletado_em' a 'pagamentos' ---
+        
+        # 1. Verifica quais colunas existem em 'pagamentos'
+        cursor.execute("PRAGMA table_info(pagamentos)")
+        pagamentos_columns = [row['name'] for row in cursor.fetchall()]
+        
+        # 2. Se 'deletado_em' NÃO estiver na lista, adiciona
+        if 'deletado_em' not in pagamentos_columns:
+            print("... Migração pendente: Adicionando 'deletado_em' a 'pagamentos'.")
+            
+            # 3. Executa o comando de alteração NÃO DESTRUTIVO
+            cursor.execute("ALTER TABLE pagamentos ADD COLUMN deletado_em TEXT DEFAULT NULL")
+            conn.commit()
+            print("... Migração 'pagamentos.deletado_em' concluída com sucesso!")
+        else:
+            print("... Coluna 'deletado_em' em 'pagamentos' já existe.")
+
+        # (Fim das migrações)
 
     except sqlite3.Error as e:
         print(f"Erro ao rodar migrações: {e}")

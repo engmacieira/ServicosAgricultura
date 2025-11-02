@@ -1,6 +1,3 @@
-// servicoUI.js - Módulo UI para Serviços
-
-// --- Elementos DOM ---
 let servicoForm;
 let servicoIdInput;
 let servicoNomeInput;
@@ -11,7 +8,6 @@ let servicoPaginationInfo;
 let servicoBtnAnterior;
 let servicoBtnProximo;
 
-// --- Handlers do Controlador ---
 let handlers = {};
 
 function _inicializarDOM() {
@@ -28,7 +24,6 @@ function _inicializarDOM() {
 }
 
 function _vincularEventos() {
-    // Adiciona verificação para garantir que os elementos existem antes de adicionar listeners
     if (servicoForm) {
         servicoForm.addEventListener('submit', handlers.onSaveServico);
     } else {
@@ -40,7 +35,6 @@ function _vincularEventos() {
     } else {
         console.error("ServicoUI: Elemento 'servico-btn-limpar' não encontrado.");
     }
-    // NOVOS EVENTOS DE PAGINAÇÃO
     if (servicoBtnAnterior) {
         servicoBtnAnterior.addEventListener('click', handlers.onServicoPaginaAnterior);
     }
@@ -60,28 +54,22 @@ export function inicializar(externalHandlers) {
     _vincularEventos();
 }
 
-// --- Funções de Manipulação da UI (exportadas) ---
-// CÓDIGO NOVO (Aceita o objeto de paginação)
 export function desenharListaServicos(paginatedData) {
     if (!listaServicos || !servicoPaginationInfo || !servicoBtnAnterior || !servicoBtnProximo) {
         console.error("ServicoUI: Elementos da lista ou paginação não encontrados para desenhar.");
         return; 
     }
 
-    // 1. Extrai os dados
     const { servicos, total_pages, current_page } = paginatedData;
 
-    listaServicos.innerHTML = ''; // Limpa a lista
+    listaServicos.innerHTML = ''; 
     
-    // 2. Desenha a lista
     if (!servicos || servicos.length === 0) { 
         listaServicos.innerHTML = '<li style="justify-content: center; background-color: var(--color-light-bg);">Nenhum serviço cadastrado.</li>'; 
     } else {
         servicos.forEach(servico => {
             const item = document.createElement('li');
             
-            // ... (Toda a lógica de criar 'infoContainer', 'actionsContainer', 'btnEditar', 'btnExcluir'...)
-            // ... (É A MESMA LÓGICA DE ANTES, APENAS COPIE E COLE)
             const infoContainer = document.createElement('div');
             infoContainer.classList.add('list-item-info');
             
@@ -117,13 +105,11 @@ export function desenharListaServicos(paginatedData) {
             
             item.appendChild(infoContainer);
             item.appendChild(actionsContainer);
-            // ... (Fim da lógica de criação do item)
 
             listaServicos.appendChild(item);
         });
     }
 
-    // 3. ATUALIZA OS CONTROLES DE PAGINAÇÃO
     servicoPaginationInfo.textContent = `Página ${current_page} de ${total_pages || 1}`;
     servicoBtnAnterior.disabled = (current_page <= 1);
     servicoBtnProximo.disabled = (current_page >= total_pages);

@@ -1,6 +1,3 @@
-// produtorUI.js - Módulo UI para Produtores
-
-// --- Elementos DOM ---
 let produtorForm;
 let produtorIdInput;
 let produtorNomeInput;
@@ -14,8 +11,10 @@ let produtorBtnLimpar;
 let produtorPaginationInfo;
 let produtorBtnAnterior;
 let produtorBtnProximo;
+let produtorSearchInput;
+let produtorBtnSearch;
+let produtorBtnClear;
 
-// --- Handlers do Controlador ---
 let handlers = {};
 
 function _inicializarDOM() {
@@ -32,24 +31,40 @@ function _inicializarDOM() {
     produtorPaginationInfo = document.getElementById('produtor-pagination-info');
     produtorBtnAnterior = document.getElementById('produtor-btn-anterior');
     produtorBtnProximo = document.getElementById('produtor-btn-proximo');
+    produtorSearchInput = document.getElementById('produtor-search-input');
+    produtorBtnSearch = document.getElementById('produtor-btn-search');
+    produtorBtnClear = document.getElementById('produtor-btn-clear');
     console.log("ProdutorUI: Elementos DOM 'cacheados'.");
 }
 
 function _vincularEventos() {
     if (!produtorForm || !produtorBtnLimpar) {
          console.error("ProdutorUI: Falha ao vincular eventos - Elementos DOM não encontrados.");
-         return; // Impede erros se o DOM não estiver pronto
+         return; 
     }
     produtorForm.addEventListener('submit', handlers.onSaveProdutor);
     produtorBtnLimpar.addEventListener('click', handlers.onClearProdutor);
 
-    // NOVOS EVENTOS DE PAGINAÇÃO
     if (produtorBtnAnterior) {
         produtorBtnAnterior.addEventListener('click', handlers.onProdutorPaginaAnterior);
     }
     if (produtorBtnProximo) {
         produtorBtnProximo.addEventListener('click', handlers.onProdutorPaginaProxima);
     }
+    if (produtorBtnSearch) {
+    produtorBtnSearch.addEventListener('click', handlers.onProdutorSearch);
+    }   
+    if (produtorBtnClear) {
+    produtorBtnClear.addEventListener('click', handlers.onProdutorClearSearch);
+    }
+    if (produtorSearchInput) {
+    produtorSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); 
+            handlers.onProdutorSearch();
+        }
+    });
+}
 
     console.log("ProdutorUI: Eventos vinculados.");
 }
@@ -59,25 +74,21 @@ function _vincularEventos() {
  * @param {object} externalHandlers - Handlers vindos do renderer.js
  */
 export function inicializar(externalHandlers) {
-    handlers = externalHandlers; // Armazena os handlers
+    handlers = externalHandlers; 
     _inicializarDOM();
     _vincularEventos();
 }
 
-// --- Funções de Manipulação da UI (exportadas) ---
-// CÓDIGO NOVO (Aceita o objeto de paginação)
 export function desenharListaProdutores(paginatedData) {
     if (!listaProdutores || !produtorPaginationInfo || !produtorBtnAnterior || !produtorBtnProximo) {
         console.error("ProdutorUI: Elementos da lista ou paginação não encontrados.");
         return;
     }
 
-    // 1. Extrai os dados da resposta da API
     const { produtores, total_pages, current_page } = paginatedData;
 
-    listaProdutores.innerHTML = ''; // Limpa a lista
+    listaProdutores.innerHTML = ''; 
     
-    // 2. Desenha a lista (lógica antiga, movida para cá)
     if (!produtores || produtores.length === 0) { 
         listaProdutores.innerHTML = '<li style="justify-content: center; background-color: var(--color-light-bg);">Nenhum produtor cadastrado.</li>';
     } else {
@@ -124,14 +135,10 @@ export function desenharListaProdutores(paginatedData) {
             listaProdutores.appendChild(item);
         });
     }
-
-    // 3. ATUALIZA OS CONTROLES DE PAGINAÇÃO
     produtorPaginationInfo.textContent = `Página ${current_page} de ${total_pages || 1}`;
     
-    // Desabilita botão "Anterior" se estiver na primeira página
     produtorBtnAnterior.disabled = (current_page <= 1);
     
-    // Desabilita botão "Próximo" se estiver na última página
     produtorBtnProximo.disabled = (current_page >= total_pages);
 }
 
@@ -177,4 +184,14 @@ export function coletarDadosProdutor() {
 
 export function getIdProdutor() {
     return produtorIdInput ? produtorIdInput.value || null : null;
+}
+
+export function getProdutorSearchTerm() {
+    return produtorSearchInput ? produtorSearchInput.value : null;
+}
+
+export function clearProdutorSearchTerm() {
+    if (produtorSearchInput) {
+        produtorSearchInput.value = '';
+    }
 }

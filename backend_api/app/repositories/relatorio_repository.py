@@ -1,24 +1,9 @@
-# app/repositories/relatorio_repository.py
 from app.core.database import get_db_connection
-
-# Mark Construtor: Este repositório é diferente.
-# Ele não faz CRUD. Ele executa consultas complexas (lógica de negócios)
-# para gerar relatórios que a nossa API precisa.
+import logging
 
 def get_dividas_por_produtor(produtor_id: int):
-    """
-    Busca todas as execuções de um produtor que NÃO estão totalmente pagas.
-    
-    Ele calcula a soma de todos os pagamentos de uma execução e
-    compara com o valor_total daquela execução.
-    
-    Retorna uma lista de dicionários, pronta para ser convertida em JSON.
-    """
-    
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    # Esta é a nossa consulta SQL "inteligente"
     sql = """
         SELECT 
             e.execucao_id,
@@ -32,23 +17,18 @@ def get_dividas_por_produtor(produtor_id: int):
         FROM 
             execucoes AS e
         
-        -- Junta com servicos para pegar o nome
         INNER JOIN 
             servicos AS s ON e.servico_id = s.servico_id
             
-        -- LEFT JOIN é crucial: pega execuções mesmo sem pagamentos
         LEFT JOIN 
             pagamentos AS p ON e.execucao_id = p.execucao_id
             
         WHERE 
             e.produtor_id = ?
             
-        -- Agrupa todos os pagamentos de uma mesma execução
         GROUP BY 
             e.execucao_id, e.data_execucao, s.nome, e.valor_total
             
-        -- Esta é a lógica de negócio: "em aberto"
-        -- Filtra os grupos onde o total devido é > total pago
         HAVING 
             e.valor_total > COALESCE(SUM(p.valor_pago), 0.0)
             
@@ -57,23 +37,14 @@ def get_dividas_por_produtor(produtor_id: int):
     """
     
     cursor.execute(sql, (produtor_id,))
-    
-    # fetchall() nos dá uma lista de "Rows" (tipo dicionário)
-    # graças ao 'conn.row_factory = sqlite3.Row' do nosso database.py
     rows = cursor.fetchall()
-    
     conn.close()
-    
-    # --- Monta o DTO (Data Transfer Object) ---
-    # Mark Construtor: Agora, transformamos os dados do banco
-    # na resposta JSON limpa que o frontend espera.
     
     relatorio = []
     for row in rows:
         valor_total = row['valor_total']
         total_pago = row['total_pago']
-        saldo_devedor = valor_total - total_pago # Calculamos o que falta
-        
+        saldo_devedor = valor_total - total_pago 
         relatorio.append({
             "execucao_id": row['execucao_id'],
             "data_execucao": row['data_execucao'],
@@ -82,5 +53,52 @@ def get_dividas_por_produtor(produtor_id: int):
             "total_pago": total_pago,
             "saldo_devedor": saldo_devedor
         })
-        
     return relatorio
+
+def purge_deleted_records():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    sql_pagamentos = "DELETE FROM pagamentos WHERE deletado_em <= date('now', '-30 days')"
+    sql_execucoes = "DELETE FROM execucoes WHERE deletado_em <= date('now', '-30 days')"
+    sql_produtores = "DELETE FROM produtores WHERE deletado_em <= date('now', '-30 days')"
+    sql_servicos = "DELETE FROM servicos WHERE deletado_em <= date('now', '-30 days')"
+
+    total_deleted = 0
+    
+    try:
+        cursor.execute(sql_pagamentos)
+        deleted_count = cursor.rowcount
+        total_deleted += deleted_count
+        if deleted_count > 0:
+            logging.info(f"[Purge] {deleted_count} pagamentos antigos excluídos permanentemente.")
+
+        cursor.execute(sql_execucoes)
+        deleted_count = cursor.rowcount
+        total_deleted += deleted_count
+        if deleted_count > 0:
+            logging.info(f"[Purge] {deleted_count} execuções antigas excluídas permanentemente.")
+
+        cursor.execute(sql_produtores)
+        deleted_count = cursor.rowcount
+        total_deleted += deleted_count
+        if deleted_count > 0:
+            logging.info(f"[Purge] {deleted_count} produtores antigos excluídos permanentemente.")
+
+        cursor.execute(sql_servicos)
+        deleted_count = cursor.rowcount
+        total_deleted += deleted_count
+        if deleted_count > 0:
+            logging.info(f"[Purge] {deleted_count} serviços antigos excluídos permanentemente.")
+
+        conn.commit()
+        logging.info(f"Rotina de Purge concluída. Total de {total_deleted} registros excluídos.")
+        return {"sucesso": True, "total_excluido": total_deleted}
+
+    except conn.Error as e:
+        logging.error(f"Erro durante a rotina de Purge: {e}")
+        conn.rollback()
+        return {"sucesso": False, "erro": str(e)}
+        
+    finally:
+        conn.close()

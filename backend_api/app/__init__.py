@@ -1,5 +1,8 @@
 # app/__init__.py
 from flask import Flask
+import logging
+import os
+from logging.handlers import RotatingFileHandler
 
 def create_app():
     """
@@ -7,6 +10,39 @@ def create_app():
     Ela cria, configura e "monta" nossa aplicação Flask.
     """
     app = Flask(__name__)
+
+    # --- NOSSA NOVA CONFIGURAÇÃO DE LOG ---
+    if not app.debug:
+        # Cria a pasta de logs se ela não existir
+        log_dir = os.path.join(app.root_path, 'logs')
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        # Configura o 'handler' do log para escrever em um arquivo
+        # maxBytes=10MB, backupCount=3 (mantém 3 arquivos antigos)
+        file_handler = RotatingFileHandler(
+            os.path.join(log_dir, 'backend.log'), 
+            maxBytes=1024 * 1024 * 10, 
+            backupCount=3
+        )
+        
+        # Define o formato da mensagem de log
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        
+        # Define o nível do log (só registra INFO e acima)
+        app.logger.setLevel(logging.INFO)
+        file_handler.setLevel(logging.INFO)
+        
+        # Adiciona o 'handler' ao logger do app
+        app.logger.addHandler(file_handler)
+        
+        app.logger.info('Servidor Backend (Flask) iniciado')
+    # --- FIM DA CONFIGURAÇÃO DE LOG ---
+
+
+    # --- Registro de Blueprints ---
 
     # --- Registro de Blueprints ---
     # Mark Construtor: Importamos todos os nossos módulos de rotas.

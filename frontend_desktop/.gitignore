@@ -32,5 +32,12 @@ __pycache__/
 # Arquivos zipados (backup da versões manuais)
 *.zip
 
+# Pasta de Backups (NOVO)
+/backups/
+
 # Planilhas
 *.xlsx
+
+# Arquivos de Log
+*.log
+logs/

@@ -1,6 +1,3 @@
-// pagamentoUI.js - Módulo UI para Pagamentos
-
-// --- Elementos DOM ---
 let pagamentosSelectExecucao;
 let pagamentosDetalhesDiv;
 let detalheProdutorNomeSpan;
@@ -10,17 +7,16 @@ let detalheValorTotalSpan;
 let detalheTotalPagoSpan;
 let detalheSaldoDevedorSpan;
 let listaPagamentosUl;
-let listaAgendamentosPadosUl;
+let listaAgendamentosPagosUl;
 let pagamentoForm;
 let pagamentoFormPlaceholder;
 let pagamentoIdInput;
-let pagamentoExecucaoIdInput; // Campo escondido para saber a qual execução pertence o pagamento
+let pagamentoExecucaoIdInput; 
 let pagamentoValorInput;
 let pagamentoDataInput;
 let pagamentoBtnLimpar;
 let pagamentoBtnCancelar;
 
-// --- Handlers do Controlador ---
 let handlers = {};
 
 function _inicializarDOM() {
@@ -33,7 +29,7 @@ function _inicializarDOM() {
     detalheTotalPagoSpan = document.getElementById('detalhe-total-pago');
     detalheSaldoDevedorSpan = document.getElementById('detalhe-saldo-devedor');
     listaPagamentosUl = document.getElementById('lista-pagamentos');
-    listaAgendamentosPadosUl = document.getElementById('lista-agendamentos-pagos');
+    listaAgendamentosPagosUl = document.getElementById('lista-agendamentos-pagos');
     pagamentoForm = document.getElementById('pagamento-form');
     pagamentoFormPlaceholder = document.getElementById('pagamento-form-placeholder');
     pagamentoIdInput = document.getElementById('pagamento-id');
@@ -82,34 +78,35 @@ export function inicializar(externalHandlers) {
     _vincularEventos();
 }
 
-// --- Funções de Manipulação da UI (exportadas) ---
-
-export function popularDropdownExecucoesPagamentos(execucoes, produtoresMap = {}, servicosMap = {}) {
+export function popularDropdownExecucoesPendentes(execucoes) {
     if (!pagamentosSelectExecucao) return;
     pagamentosSelectExecucao.innerHTML = '<option value="">Selecione um Agendamento...</option>';
+    
     if (execucoes && execucoes.length > 0) {
         execucoes.sort((a, b) => new Date(b.data_execucao) - new Date(a.data_execucao));
 
         execucoes.forEach(exec => {
-            const nomeProdutor = produtoresMap[exec.produtor_id] || `ID ${exec.produtor_id}`;
-            const nomeServico = servicosMap[exec.servico_id] || `ID ${exec.servico_id}`;
+            let nomeDisplay = exec.produtor_nome;
+            if (exec.produtor_apelido) {
+                nomeDisplay += ` (${exec.produtor_apelido})`;
+            }
+            const nomeServico = exec.servico_nome;
+
             const option = document.createElement('option');
             option.value = exec.id;
-            // Guarda dados completos no dataset para o handler 'onExecucaoSelecionada' usar
+            
             option.dataset.execucao = JSON.stringify(exec);
-            option.dataset.produtorNome = nomeProdutor;
+            option.dataset.produtorNome = nomeDisplay; 
             option.dataset.servicoNome = nomeServico;
-            option.textContent = `${exec.data_execucao} - ${nomeProdutor} - ${nomeServico} (R$ ${exec.valor_total.toFixed(2)})`;
+            
+            option.textContent = `${exec.data_execucao} - ${nomeDisplay} - ${nomeServico} (R$ ${exec.valor_total.toFixed(2)})`;
             pagamentosSelectExecucao.appendChild(option);
         });
     } else {
-        pagamentosSelectExecucao.innerHTML = '<option value="">Nenhum agendamento encontrado</option>';
+        pagamentosSelectExecucao.innerHTML = '<option value="">Nenhum agendamento pendente</option>';
     }
 }
 
-/**
- * (NOVO) Desenha a lista de execuções que já foram pagas.
- */
 export function popularListaAgendamentosPagos(execucoes) {
     if (!listaAgendamentosPagosUl) return;
     listaAgendamentosPagosUl.innerHTML = '';
@@ -119,7 +116,6 @@ export function popularListaAgendamentosPagos(execucoes) {
         return;
     }
 
-    // Ordena por data (mais recente primeiro)
     execucoes.sort((a, b) => new Date(b.data_execucao) - new Date(a.data_execucao));
 
     execucoes.forEach(exec => {
@@ -142,19 +138,13 @@ export function popularListaAgendamentosPagos(execucoes) {
     });
 }
 
-// CÓDIGO CORRETO:
 function mostrarAreaDetalhesPagamento(mostrar) {
     if (!pagamentosDetalhesDiv || !pagamentoForm || !pagamentoFormPlaceholder || !listaPagamentosUl) return;
 
-    // 1. Mostra/Esconde a coluna da DIREITA (Detalhes)
     pagamentosDetalhesDiv.style.display = mostrar ? 'block' : 'none';
 
-    // 2. Mostra/Esconde o FORMULÁRIO (na coluna da ESQUERDA)
-    // Se mostrar=true, form fica 'block'
     pagamentoForm.style.display = mostrar ? 'block' : 'none';
 
-    // 3. Mostra/Esconde o PLACEHOLDER (na coluna da ESQUERDA)
-    // Se mostrar=true, placeholder fica 'none' (some)
     pagamentoFormPlaceholder.style.display = mostrar ? 'none' : 'block';
 
     if (!mostrar) {
@@ -176,7 +166,7 @@ export function exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeSer
     detalheValorTotalSpan.textContent = execucao.valor_total.toFixed(2);
     detalheTotalPagoSpan.textContent = totalPago.toFixed(2);
     detalheSaldoDevedorSpan.textContent = saldoDevedor.toFixed(2);
-    pagamentoExecucaoIdInput.value = execucao.id; // Define o ID da execução no form
+    pagamentoExecucaoIdInput.value = execucao.id; 
     mostrarAreaDetalhesPagamento(true);
 }
 
@@ -203,10 +193,10 @@ export function desenharListaPagamentos(pagamentos) {
         const buttonsContainer = document.createElement('div');
         const btnEditar = document.createElement('button');
         btnEditar.textContent = 'Editar';
-        btnEditar.onclick = () => handlers.onEditPagamento(p); // Chama handler do renderer
+        btnEditar.onclick = () => handlers.onEditPagamento(p); 
         const btnExcluir = document.createElement('button');
         btnExcluir.textContent = 'Excluir';
-        btnExcluir.onclick = () => handlers.onDeletePagamento(p.id); // Chama handler do renderer
+        btnExcluir.onclick = () => handlers.onDeletePagamento(p.id); 
         buttonsContainer.appendChild(btnEditar);
         buttonsContainer.appendChild(btnExcluir);
         item.appendChild(infoContainer);
@@ -218,21 +208,20 @@ export function desenharListaPagamentos(pagamentos) {
 export function limparFormularioPagamento() {
     if (!pagamentoForm) return;
     pagamentoIdInput.value = '';
-    // Não limpa pagamentoExecucaoIdInput, ele pertence à execução selecionada
     pagamentoValorInput.value = '';
     pagamentoDataInput.value = '';
     pagamentoValorInput.focus();
-    pagamentoBtnCancelar.style.display = 'none'; // Esconde botão Cancelar
+    pagamentoBtnCancelar.style.display = 'none'; 
 }
 
 export function preencherFormularioPagamento(pagamento) {
     if (!pagamentoForm) return;
     pagamentoIdInput.value = pagamento.id;
-    pagamentoExecucaoIdInput.value = pagamento.execucao_id; // Confirma ID da execução
+    pagamentoExecucaoIdInput.value = pagamento.execucao_id; 
     pagamentoValorInput.value = pagamento.valor_pago;
     pagamentoDataInput.value = pagamento.data_pagamento;
     pagamentoValorInput.focus();
-    pagamentoBtnCancelar.style.display = 'inline-block'; // Mostra botão Cancelar
+    pagamentoBtnCancelar.style.display = 'inline-block'; 
 }
 
 export function coletarDadosPagamento() {
@@ -249,7 +238,6 @@ export function coletarDadosPagamento() {
         valor_pago: valorPago,
         data_pagamento: dataPagamento
     };
-    // Inclui execucao_id se estiver editando (API PUT precisa)
     if (idPagamento && !isNaN(idExecucao)) {
         dados.execucao_id = idExecucao;
     }

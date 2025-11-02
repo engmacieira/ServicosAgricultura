@@ -1,15 +1,8 @@
-// relatorioUI.js - Módulo UI para a aba Relatórios
-
-// --- Elementos DOM ---
 let relatorioSelectProdutor;
 let listaRelatorioDividas;
 
-// --- Handlers do Controlador ---
 let handlers = {};
 
-/**
- * (NOVO) Helper para formatar data AAAA-MM-DD para DD/MM/AAAA
- */
 function _formatarData(dataISO) {
     if (!dataISO) return 'N/A';
     try {
@@ -17,7 +10,7 @@ function _formatarData(dataISO) {
         return `${dia}/${mes}/${ano}`;
     } catch (e) {
         console.error("Erro ao formatar data:", dataISO, e);
-        return dataISO; // Retorna a data original se falhar
+        return dataISO; 
     }
 }
 
@@ -45,8 +38,6 @@ export function inicializar(externalHandlers) {
     _inicializarDOM();
     _vincularEventos();
 }
-
-// --- Funções de Manipulação da UI (exportadas) ---
 
 export function popularDropdownRelatorioProdutores(produtores) {
     if (!relatorioSelectProdutor) {
@@ -84,7 +75,6 @@ export function desenharRelatorioDividas(dividas) {
         return;
     }
 
-    // A API já deve retornar ordenado por data, mas garantimos aqui
     dividas.sort((a, b) => new Date(b.data_execucao) - new Date(a.data_execucao));
 
     dividas.forEach(divida => {

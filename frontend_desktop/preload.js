@@ -1,27 +1,22 @@
-// preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
 
-  // --- PRODUTORES ---
-  getProdutores: (page) => ipcRenderer.invoke('get-produtores', page), // <-- Aceita 'page'
+  getProdutores: (page, searchTerm) => ipcRenderer.invoke('get-produtores', page, searchTerm), 
   createProdutor: (produtorData) => ipcRenderer.invoke('create-produtor', produtorData),
   updateProdutor: (produtorId, produtorData) => ipcRenderer.invoke('update-produtor', produtorId, produtorData),
   deleteProdutor: (produtorId) => ipcRenderer.invoke('delete-produtor', produtorId),
 
-  // --- SERVIÇOS ---
-  getServicos: (page) => ipcRenderer.invoke('get-servicos', page), // <-- Aceita 'page'
+  getServicos: (page) => ipcRenderer.invoke('get-servicos', page), 
   createServico: (servicoData) => ipcRenderer.invoke('create-servico', servicoData),
   updateServico: (servicoId, servicoData) => ipcRenderer.invoke('update-servico', servicoId, servicoData),
   deleteServico: (servicoId) => ipcRenderer.invoke('delete-servico', servicoId),
 
-  // --- EXECUÇÕES ---
   createExecucao: (execucaoData) => ipcRenderer.invoke('create-execucao', execucaoData),
-  getExecucoes: (page, status) => ipcRenderer.invoke('get-execucoes', page, status), // <-- Aceita 'status'
+  getExecucoes: (page, status, searchTerm) => ipcRenderer.invoke('get-execucoes', page, status, searchTerm), 
   updateExecucao: (execucaoId, execucaoData) => ipcRenderer.invoke('update-execucao', execucaoId, execucaoData),
   deleteExecucao: (execucaoId) => ipcRenderer.invoke('delete-execucao', execucaoId),
 
-  // --- PAGAMENTOS ---
   getPagamentosPorExecucao: (execucaoId) => {
     return ipcRenderer.invoke('get-pagamentos-por-execucao', execucaoId);
   },
@@ -35,11 +30,14 @@ contextBridge.exposeInMainWorld('api', {
     return ipcRenderer.invoke('delete-pagamento', pagamentoId);
   },
   
-  // --- Mark Construtor: TAREFA 4 ---
-  // --- RELATÓRIOS (NOVO) ---
   getRelatorioDividas: (produtorId) => {
-    // Invoca o handler 'get-relatorio-dividas'
     return ipcRenderer.invoke('get-relatorio-dividas', produtorId);
+  },
+
+  log: {
+    info: (...args) => ipcRenderer.invoke('log:info', ...args),
+    warn: (...args) => ipcRenderer.invoke('log:warn', ...args),
+    error: (...args) => ipcRenderer.invoke('log:error', ...args)
   }
 
 });

@@ -1,8 +1,6 @@
-// tabsUI.js - Módulo para gerenciar as abas
-
 let tabButtons;
 let tabPanes;
-let onTabChangeCallback; // Callback para o renderer.js
+let onTabChangeCallback; 
 
 function _inicializarDOM() {
     tabButtons = document.querySelectorAll('.tab-button');
@@ -11,7 +9,7 @@ function _inicializarDOM() {
 }
 
 function _vincularEventos() {
-    if (!tabButtons) return; // Proteção extra, embora _inicializarDOM já tenha sido chamado
+    if (!tabButtons) return; 
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const targetPaneId = trocarAba(button);

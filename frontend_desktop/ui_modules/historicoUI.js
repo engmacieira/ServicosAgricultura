@@ -1,17 +1,13 @@
-// historicoUI.js - Módulo UI para a aba Histórico
-
-// --- Elementos DOM ---
 let listaHistorico;
 let historicoPaginationInfo;
 let historicoBtnAnterior;
 let historicoBtnProximo;
+let historicoSearchInput;
+let historicoBtnSearch;
+let historicoBtnClear;
 
-// --- Handlers do Controlador (para os botões da lista) ---
 let handlers = {};
 
-/**
- * (NOVO) Helper para formatar data AAAA-MM-DD para DD/MM/AAAA
- */
 function _formatarData(dataISO) {
     if (!dataISO) return 'N/A';
     try {
@@ -19,7 +15,7 @@ function _formatarData(dataISO) {
         return `${dia}/${mes}/${ano}`;
     } catch (e) {
         console.error("Erro ao formatar data:", dataISO, e);
-        return dataISO; // Retorna a data original se falhar
+        return dataISO; 
     }
 }
 
@@ -28,35 +24,45 @@ function _inicializarDOM() {
     historicoPaginationInfo = document.getElementById('historico-pagination-info');
     historicoBtnAnterior = document.getElementById('historico-btn-anterior');
     historicoBtnProximo = document.getElementById('historico-btn-proximo');
+    historicoSearchInput = document.getElementById('historico-search-input');
+    historicoBtnSearch = document.getElementById('historico-btn-search');
+    historicoBtnClear = document.getElementById('historico-btn-clear');
     console.log("HistoricoUI: Elemento DOM 'cacheado'.");
 }
 
 function _vincularEventos() {
-    // Vínculos dos botões de paginação
     if (historicoBtnAnterior) {
         historicoBtnAnterior.addEventListener('click', handlers.onHistoricoPaginaAnterior);
     }
     if (historicoBtnProximo) {
         historicoBtnProximo.addEventListener('click', handlers.onHistoricoPaginaProxima);
     }
+    if (historicoBtnSearch) {
+    historicoBtnSearch.addEventListener('click', handlers.onHistoricoSearch);
+    }
+    if (historicoBtnClear) {
+    historicoBtnClear.addEventListener('click', handlers.onHistoricoClearSearch);
+    }
+    if (historicoSearchInput) {
+    historicoSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); 
+            handlers.onHistoricoSearch();
+        }
+    });
+}
     console.log("HistoricoUI: Eventos de paginação vinculados.");
 }
-
-// Nota: Não temos um _vincularEventos() principal aqui, pois não há formulários
-// Os eventos dos botões são vinculados dinamicamente em desenharListaExecucoes
 
 /**
  * Inicializa o módulo UI de Histórico.
  * @param {object} externalHandlers - Handlers vindos do renderer.js (onEditExecucao, onDeleteExecucao)
  */
 export function inicializar(externalHandlers) {
-    handlers = externalHandlers; // Armazena os handlers para os botões Editar/Excluir
+    handlers = externalHandlers;
     _inicializarDOM();
     _vincularEventos();
-    // Não precisa chamar _vincularEventos aqui
 }
-
-// --- Funções de Manipulação da UI (exportadas) ---
 
 /**
  * Desenha a lista de execuções (histórico) na tela.
@@ -65,8 +71,6 @@ export function inicializar(externalHandlers) {
  * @param {Object} [servicosMap] - Mapa {id: nome}.
  * // Os handlers agora vêm do objeto 'handlers' do módulo
  */
-// CÓDIGO NOVO (Aceita o objeto de paginação)
-// CÓDIGO NOVO (lê dados prontos do backend)
 export function desenharListaExecucoes(paginatedData) {
      if (!listaHistorico || !historicoPaginationInfo || !historicoBtnAnterior || !historicoBtnProximo) {
         console.error("HistoricoUI: Elemento 'lista-historico' ou paginação não encontrado para desenhar.");
@@ -82,13 +86,11 @@ export function desenharListaExecucoes(paginatedData) {
         execucoes.forEach(exec => {
             const item = document.createElement('li');
             
-            // --- TAREFA 1: Exibir Apelido ---
             let nomeDisplay = exec.produtor_nome;
             if (exec.produtor_apelido) {
                 nomeDisplay += ` (${exec.produtor_apelido})`;
             }
 
-            // --- TAREFA 3: Resumo do Pagamento (Estilo) ---
             let statusPagamentoHTML = '';
             if (exec.saldo_devedor <= 0) {
                 statusPagamentoHTML = `<span style="color: green; font-weight: bold;">(Pago)</span>`;
@@ -96,7 +98,6 @@ export function desenharListaExecucoes(paginatedData) {
                 statusPagamentoHTML = `<span style="color: red; font-weight: bold;">(R$ ${exec.saldo_devedor.toFixed(2)} pendente)</span>`;
             }
 
-            // --- Montagem do HTML ---
             const infoContainer = document.createElement('div');
             infoContainer.style.flexGrow = '1';
             infoContainer.innerHTML = `
@@ -113,17 +114,10 @@ export function desenharListaExecucoes(paginatedData) {
                 </div>
             `;
 
-            // Lógica dos botões (permanece a mesma)
             const buttonsContainer = document.createElement('div');
             const btnEditar = document.createElement('button');
             btnEditar.textContent = 'Editar';
             btnEditar.onclick = () => {
-                // NOTA: O 'exec' que passamos aqui é o objeto do backend.
-                // A função 'preencherFormularioAgendamento' espera
-                // 'produtor_id' e 'servico_id', que não temos mais.
-                // Precisamos refatorar 'handleEditExecucao'
-                
-                // MANTEMOS POR ENQUANTO, MAS SABEMOS QUE O EDITAR VAI QUEBRAR
                 if (handlers.onEditExecucao) handlers.onEditExecucao(exec);
             };
 
@@ -142,8 +136,17 @@ export function desenharListaExecucoes(paginatedData) {
         });
     }
 
-    // Atualiza a paginação (mesma lógica)
     historicoPaginationInfo.textContent = `Página ${current_page} de ${total_pages || 1}`;
     historicoBtnAnterior.disabled = (current_page <= 1);
     historicoBtnProximo.disabled = (current_page >= total_pages);
+}
+
+export function getHistoricoSearchTerm() {
+    return historicoSearchInput ? historicoSearchInput.value : null;
+}
+
+export function clearHistoricoSearchTerm() {
+    if (historicoSearchInput) {
+        historicoSearchInput.value = '';
+    }
 }

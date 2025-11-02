@@ -1,27 +1,15 @@
-# app/repositories/execucao_repository.py
 from app.core.database import get_db_connection
 from app.models.execucao_model import Execucao
-
-# Mark Construtor: Esta é a camada de Acesso a Dados para 'Execucoes'.
-# Ela lida com as restrições de Chave Estrangeira.
+import logging
 
 def get_execucao_by_id(execucao_id: int):
-    """
-    (R)ead: Busca uma Execucao no banco pelo seu ID
-    e retorna um *objeto* do tipo Execucao.
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM execucoes WHERE execucao_id = ?", (execucao_id,))
+    cursor.execute("SELECT * FROM execucoes WHERE execucao_id = ? AND deletado_em IS NULL", (execucao_id,))
     data = cursor.fetchone()
-    
     conn.close()
-    
     if data is None:
-        return None # Não achamos a execução
-    
-    # Mapeia os dados do banco para o nosso objeto Execucao
+        return None 
     return Execucao(
         execucao_id=data['execucao_id'],
         produtor_id=data['produtor_id'],
@@ -31,79 +19,64 @@ def get_execucao_by_id(execucao_id: int):
         valor_total=data['valor_total']
     )
 
-# CÓDIGO NOVO (Consulta "Inteligente")
-def get_all_execucoes(page: int, per_page: int, status: str = 'todos'):
-    """
-    (R)ead: Busca *todas* as Execucoes no banco (com paginação)
-    e já inclui os nomes (Produtor/Serviço) e o total pago.
-    Retorna uma *lista de dicionários* pronta para a API.
-    """
+def get_all_execucoes(page: int, per_page: int, status: str = 'todos', search_term: str = None):
     conn = get_db_connection()
     cursor = conn.cursor()
-    
     offset = (page - 1) * per_page
-    
-    sql = """
+    params = []
+    where_clause = "WHERE e.deletado_em IS NULL" 
+    if search_term:
+        where_clause += """
+        AND (
+            p.nome LIKE ? OR 
+            p.apelido LIKE ? OR 
+            s.nome LIKE ? OR 
+            e.data_execucao LIKE ? OR
+            strftime('%d/%m/%Y', e.data_execucao) LIKE ?
+        )
+        """
+        search_like = f"%{search_term}%"
+        params.extend([search_like, search_like, search_like, search_like, search_like])
+        
+    sql_base = """
         SELECT 
-            e.execucao_id,
-            e.produtor_id, 
-            e.servico_id, 
-            e.data_execucao,
-            e.valor_total,
-            e.horas_prestadas,
-            
-            p.nome AS produtor_nome,
-            p.apelido AS produtor_apelido,
+            e.execucao_id, e.produtor_id, e.servico_id, 
+            e.data_execucao, e.valor_total, e.horas_prestadas,
+            p.nome AS produtor_nome, p.apelido AS produtor_apelido,
             s.nome AS servico_nome,
-            
-            -- Se não houver pagamentos (NULL), trata como 0.0
             COALESCE(SUM(pag.valor_pago), 0.0) AS total_pago
-            
         FROM 
             execucoes AS e
-        
-        -- Junta com produtores para pegar o nome/apelido
         INNER JOIN 
             produtores AS p ON e.produtor_id = p.produtor_id
-            
-        -- Junta com servicos para pegar o nome
         INNER JOIN 
             servicos AS s ON e.servico_id = s.servico_id
-            
-        -- LEFT JOIN é crucial: pega execuções mesmo sem pagamentos
         LEFT JOIN 
             pagamentos AS pag ON e.execucao_id = pag.execucao_id
-            
-        -- Agrupa todos os pagamentos de uma mesma execução
-        GROUP BY 
-            e.execucao_id, e.data_execucao, e.valor_total, e.horas_prestadas,
-            p.nome, p.apelido, s.nome
-            
-        # --- NOSSA NOVA LÓGICA DE FILTRO ---
-        having_clause = ""
-        if status == 'pendentes':
-            having_clause = "HAVING e.valor_total > COALESCE(SUM(pag.valor_pago), 0.0)"
-        elif status == 'pagas':
-            having_clause = "HAVING e.valor_total <= COALESCE(SUM(pag.valor_pago), 0.0)"
-    
-        sql += f" {having_clause} "
-            
-        ORDER BY
-            e.data_execucao DESC
-            
-        LIMIT ? OFFSET ?;
     """
     
-    cursor.execute(sql, (per_page, offset))
+    having_clause = ""
+    if status == 'pendentes':
+        having_clause = "HAVING e.valor_total > COALESCE(SUM(pag.valor_pago), 0.0)"
+    elif status == 'pagas':
+        having_clause = "HAVING e.valor_total <= COALESCE(SUM(pag.valor_pago), 0.0)"
+
+    group_by_clause = """
+        GROUP BY 
+            e.execucao_id, e.produtor_id, e.servico_id,
+            e.data_execucao, e.valor_total, e.horas_prestadas,
+            p.nome, p.apelido, s.nome
+    """
+    order_limit_clause = " ORDER BY e.data_execucao DESC LIMIT ? OFFSET ?;"
+
+    sql = sql_base + where_clause + group_by_clause + having_clause + order_limit_clause
     
-    # fetchall() com row_factory nos dá uma lista de "Rows" (tipo dicionário)
+    params.extend([per_page, offset])
+    
+    cursor.execute(sql, params)
+    
     rows = cursor.fetchall()
-    
     conn.close()
-    
-    # --- Monta o DTO (Data Transfer Object) ---
-    # Converte o 'Row' do SQLite (que não é JSON) para um dict padrão
-    # e calcula o saldo devedor
     
     lista_execucoes = []
     for row in rows:
@@ -112,7 +85,7 @@ def get_all_execucoes(page: int, per_page: int, status: str = 'todos'):
         saldo_devedor = valor_total - total_pago
         
         lista_execucoes.append({
-            "id": row['execucao_id'], # O frontend espera 'id'
+            "id": row['execucao_id'],
             "produtor_id": row['produtor_id'], 
             "servico_id": row['servico_id'],  
             "data_execucao": row['data_execucao'],
@@ -123,59 +96,66 @@ def get_all_execucoes(page: int, per_page: int, status: str = 'todos'):
             "servico_nome": row['servico_nome'],
             "total_pago": total_pago,
             "saldo_devedor": saldo_devedor
-            # NOTA: Não precisamos mais de produtor_id ou servico_id no frontend
         })
         
     return lista_execucoes
     
-def get_execucoes_count(status: str = 'todos'):
-    """ Retorna o número total de execuções cadastradas. """
+def get_execucoes_count(status: str = 'todos', search_term: str = None):
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-# CÓDIGO NOVO (Contagem com filtro)
-    
-    # 1. Define a lógica de filtro (deve ser idêntica à de get_all_execucoes)
+    params = []
+    where_clause = "WHERE e.deletado_em IS NULL"
+    if search_term:
+        where_clause += """
+        AND (
+            p.nome LIKE ? OR 
+            p.apelido LIKE ? OR 
+            s.nome LIKE ? OR 
+            e.data_execucao LIKE ? OR
+            strftime('%d/%m/%Y', e.data_execucao) LIKE ?
+        )
+        """
+        search_like = f"%{search_term}%"
+        params.extend([search_like, search_like, search_like, search_like, search_like])
+
     having_clause = ""
     if status == 'pendentes':
         having_clause = "HAVING e.valor_total > COALESCE(SUM(pag.valor_pago), 0.0)"
     elif status == 'pagas':
         having_clause = "HAVING e.valor_total <= COALESCE(SUM(pag.valor_pago), 0.0)"
 
-    # 2. Cria a subquery que encontra os IDs das execuções filtradas
     sql_subquery = f"""
         SELECT e.execucao_id
         FROM execucoes AS e
-        LEFT JOIN pagamentos AS pag ON e.execucao_id = pag.execucao_id
+        INNER JOIN 
+            produtores AS p ON e.produtor_id = p.produtor_id
+        INNER JOIN 
+            servicos AS s ON e.servico_id = s.servico_id
+        LEFT JOIN 
+            pagamentos AS pag ON e.execucao_id = pag.execucao_id
+        {where_clause}
         GROUP BY e.execucao_id, e.valor_total
         {having_clause}
     """
     
-    # 3. Conta quantos itens a subquery retornou
-    # (Se o status for 'todos', usamos a contagem simples e rápida)
-    if status == 'todos':
+    if status == 'todos' and not search_term:
         cursor.execute("SELECT COUNT(*) FROM execucoes")
     else:
-        cursor.execute(f"SELECT COUNT(*) FROM ({sql_subquery}) AS sub")
+        cursor.execute(f"SELECT COUNT(*) FROM ({sql_subquery}) AS sub", params)
     
     total = cursor.fetchone()[0]
     
     conn.close()
     return total
-
+    
 def create_execucao(execucao: Execucao):
-    """
-    (C)reate: Salva um *objeto* Execucao no banco (INSERT).
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
-    
     sql = """
         INSERT INTO execucoes (produtor_id, servico_id, data_execucao, 
                                horas_prestadas, valor_total)
         VALUES (?, ?, ?, ?, ?)
     """
-    
     params = (
         execucao.produtor_id,
         execucao.servico_id,
@@ -183,85 +163,64 @@ def create_execucao(execucao: Execucao):
         execucao.horas_prestadas,
         execucao.valor_total
     )
-    
     try:
         cursor.execute(sql, params)
         execucao.execucao_id = cursor.lastrowid
         conn.commit()
-        print(f"Execução salva! ID: {execucao.execucao_id}")
-        return execucao
-        
+        logging.info(f"Agendamento salvo! ID: {execucao.execucao_id}")
+        return execucao   
     except conn.IntegrityError as e:
-        # 💡 Mentoria: Isso captura o erro 'FOREIGN KEY constraint failed'
-        print(f"Erro de integridade ao criar execução: {e}")
-        print("Verifique se o 'produtor_id' e 'servico_id' existem.")
-        return None # Retorna None para indicar que falhou
-        
+        logging.error(f"Erro de integridade ao criar execução: {e}")
+        logging.error("Verifique se o 'produtor_id' e 'servico_id' existem.")
+        return None 
     finally:
         conn.close()
 
 def update_execucao(execucao: Execucao):
-    """
-    (U)pdate: Atualiza uma Execucao existente no banco (UPDATE).
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
-
     sql = """
         UPDATE execucoes 
         SET produtor_id = ?, servico_id = ?, data_execucao = ?, 
             horas_prestadas = ?, valor_total = ?
         WHERE execucao_id = ?
     """
-    
     params = (
         execucao.produtor_id,
         execucao.servico_id,
         execucao.data_execucao,
         execucao.horas_prestadas,
         execucao.valor_total,
-        execucao.execucao_id # ID é o último, para o WHERE
+        execucao.execucao_id 
     )
-    
     try:
         cursor.execute(sql, params)
         conn.commit()
-        print(f"Execução atualizada! ID: {execucao.execucao_id}")
-        return execucao
-        
+        logging.info(f"Execução atualizada! ID: {execucao.execucao_id}")
+        return execucao   
     except conn.IntegrityError as e:
-        print(f"Erro de integridade ao atualizar execução: {e}")
-        print("Verifique se o 'produtor_id' e 'servico_id' existem.")
-        return None # Falha devido à restrição FK
-        
+        logging.error(f"Erro de integridade ao atualizar execução: {e}")
+        logging.error("Verifique se o 'produtor_id' e 'servico_id' existem.")
+        return None 
     finally:
         conn.close()
 
 def delete_execucao(execucao_id: int):
-    """
-    (D)elete: Exclui uma Execucao do banco pelo seu ID (DELETE).
-    Retorna True se foi bem-sucedido, False caso contrário.
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    sql = "DELETE FROM execucoes WHERE execucao_id = ?"
-    
+    sql = "UPDATE execucoes SET deletado_em = CURRENT_TIMESTAMP WHERE execucao_id = ?"
     try:
         cursor.execute(sql, (execucao_id,))
         conn.commit()
-        
-        deleted = cursor.rowcount > 0
-        print(f"Tentativa de exclusão da execução ID: {execucao_id}. Sucesso: {deleted}")
-        # Lembre-se: Pagamentos ligados a esta execução
-        # foram deletados em CASCADE.
-        return deleted
-        
-    except conn.IntegrityError as e:
-        # Embora não deva acontecer no DELETE (só no CREATE/UPDATE),
-        # é uma boa prática manter.
-        print(f"Erro de integridade ao excluir execução: {e}")
-        return False
-        
-    finally:
+        updated = cursor.rowcount > 0
         conn.close()
+        if updated:
+            logging.info(f"Soft delete da Execucao ID: {execucao_id} realizado com sucesso.")
+        else:
+            logging.warn(f"Tentativa de soft delete da Execucao ID: {execucao_id} falhou (ID não encontrado).")
+        return updated
+        
+    except conn.Error as e:
+        logging.error(f"Erro ao tentar fazer soft delete da Execucao ID {execucao_id}: {e}")
+        conn.close()
+        return False
