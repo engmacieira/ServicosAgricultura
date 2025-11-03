@@ -34,6 +34,11 @@ contextBridge.exposeInMainWorld('api', {
     return ipcRenderer.invoke('get-relatorio-dividas', produtorId);
   },
 
+  dialog: {
+    alert: (message) => ipcRenderer.invoke('dialog:alert', message),
+    confirm: (message) => ipcRenderer.invoke('dialog:confirm', message)
+  },
+
   log: {
     info: (...args) => ipcRenderer.send('log:info', ...args),
     warn: (...args) => ipcRenderer.send('log:warn', ...args),

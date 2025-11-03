@@ -21,6 +21,7 @@ let historicoSearchTerm = null;
 let produtorSearchTerm = null;
 let cacheProdutoresCompleto = [];
 let cacheServicosCompleto = [];
+let cacheExecucaoSelecionada = null;
 
 async function carregarProdutores(page = 1, search = produtorSearchTerm) {
     try {
@@ -35,7 +36,7 @@ async function carregarProdutores(page = 1, search = produtorSearchTerm) {
         
     } catch (error) {
         log.error("Erro ao carregar produtores:", error);
-        alert("Falha grave ao buscar produtores.");
+        await api.dialog.alert("Falha grave ao buscar produtores.");
     }
 }
 async function handleSaveProdutor(event) {
@@ -51,7 +52,7 @@ async function handleSaveProdutor(event) {
             produtorSalvo = await api.updateProdutor(id, dadosProdutor);
             if (!produtorSalvo || produtorSalvo.error) throw new Error(produtorSalvo?.error || "API não retornou o produtor atualizado.");
             
-            alert(`Produtor "${produtorSalvo.nome}" atualizado!`);
+            await api.dialog.alert(`Produtor "${produtorSalvo.nome}" atualizado!`);
 
             setTimeout(async () => {
                 await carregarProdutores(produtoresPaginaAtual); 
@@ -61,7 +62,7 @@ async function handleSaveProdutor(event) {
             produtorSalvo = await api.createProdutor(dadosProdutor);
             if (!produtorSalvo || produtorSalvo.error) throw new Error(produtorSalvo?.error || "API não retornou o novo produtor.");
             
-            alert(`Produtor "${produtorSalvo.nome}" criado com ID: ${produtorSalvo.id}`);
+            await api.dialog.alert(`Produtor "${produtorSalvo.nome}" criado com ID: ${produtorSalvo.id}`);
             
             setTimeout(async () => {
                 await carregarProdutores(1); 
@@ -75,7 +76,7 @@ async function handleSaveProdutor(event) {
         
     } catch (error) {
         log.error("Erro ao salvar produtor:", error);
-        alert(`Falha ao salvar produtor: ${error.message}`);
+        await api.dialog.alert(`Falha ao salvar produtor: ${error.message}`);
         await carregarProdutores(produtoresPaginaAtual); 
     }
 }
@@ -87,10 +88,10 @@ function handleEditProdutor(produtor) {
 }
 async function handleDeleteProdutor(id) {
     cacheProdutoresCompleto = [];
-    if (confirm(`Tem certeza que deseja excluir o produtor ID ${id}?`)) {
+    if (await api.dialog.confirm(`Tem certeza que deseja excluir o produtor ID ${id}?`)) {
         try {
             await api.deleteProdutor(id);
-            alert(`Produtor ID ${id} excluído com sucesso.`);
+            await api.dialog.alert(`Produtor ID ${id} excluído com sucesso.`);
             setTimeout(async () => {
                 await carregarProdutores(produtoresPaginaAtual);
             }, 0);
@@ -98,7 +99,7 @@ async function handleDeleteProdutor(id) {
             relatorioProdutoresCarregado = false;
         } catch (error) {
             log.error(`Erro ao excluir produtor ${id}:`, error);
-            alert("Falha ao excluir. (Verifique se o produtor não possui execuções de serviço.)");
+            await api.dialog.alert("Falha ao excluir. (Verifique se o produtor não possui execuções de serviço.)");
         }
     }
 }
@@ -115,7 +116,7 @@ async function carregarServicos(page = 1) {
 
     } catch (error) {
         log.error("Erro ao carregar serviços:", error);
-        alert("Falha grave ao buscar serviços.");
+        await api.dialog.alert("Falha grave ao buscar serviços.");
     }
 }
 async function handleSaveServico(event) {
@@ -131,7 +132,7 @@ async function handleSaveServico(event) {
             servicoSalvo = await api.updateServico(id, dadosServico);
             if (!servicoSalvo || servicoSalvo.error) throw new Error(servicoSalvo?.error || "API não retornou o serviço atualizado.");
             
-            alert(`Serviço "${servicoSalvo.nome}" atualizado!`);
+            await api.dialog.alert(`Serviço "${servicoSalvo.nome}" atualizado!`);
 
             setTimeout(async () => {
                 await carregarServicos(servicosPaginaAtual);
@@ -141,7 +142,7 @@ async function handleSaveServico(event) {
             servicoSalvo = await api.createServico(dadosServico);
             if (!servicoSalvo || servicoSalvo.error) throw new Error(servicoSalvo?.error || "API não retornou o novo serviço.");
             
-            alert(`Serviço "${servicoSalvo.nome}" criado com ID: ${servicoSalvo.id}`);
+            await api.dialog.alert(`Serviço "${servicoSalvo.nome}" criado com ID: ${servicoSalvo.id}`);
 
             setTimeout(async () => {
                 await carregarServicos(1);
@@ -154,7 +155,7 @@ async function handleSaveServico(event) {
         
     } catch (error) {
         log.error("Erro ao salvar serviço:", error);
-        alert(`Falha ao salvar serviço: ${error.message}`);
+        await api.dialog.alert(`Falha ao salvar serviço: ${error.message}`);
         await carregarServicos(servicosPaginaAtual);
     }
 }
@@ -166,17 +167,17 @@ function handleEditServico(servico) {
 }
 async function handleDeleteServico(id) {
     cacheServicosCompleto = []; 
-    if (confirm(`Tem certeza que deseja excluir o serviço ID ${id}?`)) {
+    if (await api.dialog.confirm(`Tem certeza que deseja excluir o serviço ID ${id}?`)) {
         try {
             await api.deleteServico(id);
-            alert(`Serviço ID ${id} excluído com sucesso.`);
+            await api.dialog.alert(`Serviço ID ${id} excluído com sucesso.`);
             setTimeout(async () => {
                 await carregarServicos(servicosPaginaAtual); 
             }, 0);
             ui.limparFormularioServico();
         } catch (error) {
             log.error(`Erro ao excluir serviço ${id}:`, error);
-            alert("Falha ao excluir. (Verifique se o serviço não está sendo usado em uma execução.)");
+            await api.dialog.alert("Falha ao excluir. (Verifique se o serviço não está sendo usado em uma execução.)");
         }
     }
 }
@@ -193,20 +194,20 @@ async function handleSaveExecucao(event) {
             resultado = await api.updateExecucao(id, dadosExecucao);
             if (resultado && resultado.error) throw new Error(resultado.error);
             if (!resultado) throw new Error("API não retornou a execução atualizada.");
-            alert(`Agendamento ID ${resultado.id} atualizado com sucesso!`);
+            await api.dialog.alert(`Agendamento ID ${resultado.id} atualizado com sucesso!`);
         } else {
             log.info("Criando nova execução...");
             resultado = await api.createExecucao(dadosExecucao);
             if (resultado && resultado.error) throw new Error(resultado.error);
             if (!resultado) throw new Error("API não retornou a nova execução.");
-            alert(`Agendamento criado com sucesso! ID: ${resultado.id}`);
+            await api.dialog.alert(`Agendamento criado com sucesso! ID: ${resultado.id}`);
         }
         ui.limparFormularioAgendamento();
         historicoCarregadoPrimeiraVez = false; 
         pagamentosDropdownCarregado = false; 
     } catch (error) {
         log.error("Erro ao salvar agendamento:", error);
-        alert(`Falha ao salvar agendamento: ${error.message}`);
+        await api.dialog.alert(`Falha ao salvar agendamento: ${error.message}`);
     }
 }
 function handleClearAgendamento() {
@@ -228,7 +229,7 @@ async function carregarExecucoes(page = 1, search = historicoSearchTerm) {
 
     } catch (error) {
         log.error("Erro ao carregar execuções:", error);
-        alert("Falha grave ao buscar o histórico de execuções.");
+        await api.dialog.alert("Falha grave ao buscar o histórico de execuções.");
     }
 }
 
@@ -252,13 +253,15 @@ async function carregarDadosAgendamento() {
         log.info("Dropdowns de agendamento populados.");
     } catch (error) {
          log.error("Erro ao carregar histórico de execuções:", error);
-         alert("Falha grave ao buscar histórico.");
+         await api.dialog.alert("Falha grave ao buscar histórico.");
          ui.desenharListaExecucoes([], {}, {}, handleEditExecucao, handleDeleteExecucao); 
     }
 }
-function handleEditExecucao(execucao) {
+async function handleEditExecucao(execucao) { 
     log.info("Editando execução:", execucao);
-    carregarDadosAgendamento().then(() => {
+    try { 
+        await carregarDadosAgendamento(); 
+
         ui.preencherFormularioAgendamento(execucao);
         const agendamentoTabButton = document.querySelector('button[data-tab="painel-agendamento"]');
         if (agendamentoTabButton) {
@@ -266,18 +269,19 @@ function handleEditExecucao(execucao) {
         } else {
             log.error("Não foi possível encontrar o botão da aba de agendamento.");
         }
-    }).catch(error => {
+    } catch (error) { 
+
         log.error("Erro ao preparar edição de execução:", error);
-        alert("Erro ao carregar dados para edição.");
-    });
+        await api.dialog.alert("Erro ao carregar dados para edição.");
+    }
 }
 async function handleDeleteExecucao(id) {
-    if (confirm(`Tem certeza que deseja excluir o agendamento ID ${id}? (Pagamentos associados também serão excluídos!)`)) {
+    if (await api.dialog.confirm(`Tem certeza que deseja excluir o agendamento ID ${id}? (Pagamentos associados também serão excluídos!)`)) {
         try {
             log.info(`Excluindo execução ID: ${id}`);
             const resultado = await api.deleteExecucao(id);
             if (resultado && resultado.error) throw new Error(resultado.error);
-            alert(`Agendamento ID ${id} excluído com sucesso.`);
+            await api.dialog.alert(`Agendamento ID ${id} excluído com sucesso.`);
             pagamentosDropdownCarregado = false; 
             historicoCarregadoPrimeiraVez = false;
             setTimeout(async () => { 
@@ -285,7 +289,7 @@ async function handleDeleteExecucao(id) {
             }, 0);
         } catch (error) {
             log.error(`Erro ao excluir execução ${id}:`, error);
-            alert(`Falha ao excluir agendamento: ${error.message}`);
+            await api.dialog.alert(`Falha ao excluir agendamento: ${error.message}`);
         }
     }
 }
@@ -307,12 +311,13 @@ async function carregarDadosPagamentos() {
 
     } catch (error) {
         log.error("Erro ao carregar dados para pagamentos:", error);
-        alert("Falha ao carregar dados para pagamentos.");
+        await api.dialog.alert("Falha ao carregar dados para pagamentos.");
         ui.popularDropdownExecucoesPendentes([]);
         ui.popularListaAgendamentosPagos([]);
     }
 }
 async function _carregarDetalhesExecucao(execucao) {
+    cacheExecucaoSelecionada = execucao;
     if (!execucao || !execucao.id) {
         ui.exibirDetalhesExecucaoPagamentos(null, null, null, []);
         ui.desenharListaPagamentos([], handleEditPagamento, handleDeletePagamento);
@@ -329,12 +334,23 @@ async function _carregarDetalhesExecucao(execucao) {
         const pagamentos = await api.getPagamentosPorExecucao(execucaoId);
         cachePagamentosAtuais = pagamentos;
         
+        const totalPago = pagamentos.reduce((soma, p) => soma + p.valor_pago, 0);
+        const saldoDevedor = execucao.valor_total - totalPago;
+
         ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, cachePagamentosAtuais);
         ui.desenharListaPagamentos(cachePagamentosAtuais, handleEditPagamento, handleDeletePagamento);
-        ui.limparFormularioPagamento(); 
+
+        if (saldoDevedor <= 0 && pagamentos.length === 1) {
+            log.info("Execução paga com um único pagamento. Pré-preenchendo formulário.");
+            ui.preencherFormularioPagamento(pagamentos[0]);
+        } else {
+
+            ui.limparFormularioPagamento();
+        }
+
     } catch (error) {
         log.error(`Erro ao buscar pagamentos para execução ${execucao.id}:`, error);
-        alert("Falha ao buscar pagamentos para a execução selecionada.");
+        await api.dialog.alert("Falha ao buscar pagamentos para a execução selecionada.");
         ui.exibirDetalhesExecucaoPagamentos(null, null, null, []);
         ui.desenharListaPagamentos([], handleEditPagamento, handleDeletePagamento);
     }
@@ -368,7 +384,7 @@ async function handleSavePagamento(event) {
 
     const execucaoIdSelecionada = document.getElementById('pagamentos-select-execucao').value;
     if (!execucaoIdSelecionada) {
-        alert("Erro interno: Nenhuma execução selecionada para associar o pagamento.");
+        await api.dialog.alert("Erro interno: Nenhuma execução selecionada para associar o pagamento.");
         return;
     }
 
@@ -384,7 +400,7 @@ async function handleSavePagamento(event) {
             if (index !== -1) {
                 cachePagamentosAtuais[index] = pagamentoSalvo;
             }
-            alert(`Pagamento ID ${pagamentoSalvo.id} atualizado!`);
+            await api.dialog.alert(`Pagamento ID ${pagamentoSalvo.id} atualizado!`);
             pagamentosDropdownCarregado = false;
 
         } else {
@@ -394,7 +410,7 @@ async function handleSavePagamento(event) {
             if (!pagamentoSalvo) throw new Error("API não retornou o novo pagamento.");
 
             cachePagamentosAtuais.push(pagamentoSalvo);
-            alert(`Pagamento criado com ID: ${pagamentoSalvo.id}`);
+            await api.dialog.alert(`Pagamento criado com ID: ${pagamentoSalvo.id}`);
             pagamentosDropdownCarregado = false;
         }
 
@@ -411,7 +427,7 @@ async function handleSavePagamento(event) {
 
     } catch (error) {
         log.error("Erro ao salvar pagamento:", error);
-        alert(`Falha ao salvar pagamento: ${error.message}`);
+        await api.dialog.alert(`Falha ao salvar pagamento: ${error.message}`);
         
         await refreshPagamentosVisiveis();
     }
@@ -424,21 +440,24 @@ function handleEditPagamento(pagamento) {
     ui.preencherFormularioPagamento(pagamento);
 }
 async function handleDeletePagamento(id) {
-    if (confirm(`Tem certeza que deseja excluir o pagamento ID ${id}?`)) {
+    if (await api.dialog.confirm(`Tem certeza que deseja excluir o pagamento ID ${id}?`)) {
         try {
             log.info(`Excluindo pagamento ID: ${id}`);
             const resultado = await api.deletePagamento(id);
             if (resultado && resultado.error) throw new Error(resultado.error);
-            alert(`Pagamento ID ${id} excluído com sucesso.`);
+            await api.dialog.alert(`Pagamento ID ${id} excluído com sucesso.`);
             pagamentosDropdownCarregado = false;
 
             cachePagamentosAtuais = cachePagamentosAtuais.filter(p => p.id != id);
 
-            const selectElement = document.getElementById('pagamentos-select-execucao');
-            const selectedOption = selectElement.options[selectElement.selectedIndex];
-            const execucao = JSON.parse(selectedOption.dataset.execucao);
-            const nomeProdutor = selectedOption.dataset.produtorNome;
-            const nomeServico = selectedOption.dataset.servicoNome;
+            if (!cacheExecucaoSelecionada) {
+                log.error("handleDeletePagamento: Nenhuma execução selecionada no cache.");
+                await api.dialog.alert("Erro: Nenhuma execução selecionada para atualizar a lista.");
+                return;
+            }
+            const execucao = cacheExecucaoSelecionada;
+            const nomeProdutor = execucao.produtor_nome + (execucao.produtor_apelido ? ` (${execucao.produtor_apelido})` : '');
+            const nomeServico = execucao.servico_nome;
 
             ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, cachePagamentosAtuais);
             ui.desenharListaPagamentos(cachePagamentosAtuais, handleEditPagamento, handleDeletePagamento);
@@ -447,7 +466,7 @@ async function handleDeletePagamento(id) {
 
         } catch (error) {
             log.error(`Erro ao excluir pagamento ${id}:`, error);
-            alert(`Falha ao excluir pagamento: ${error.message}`);
+            await api.dialog.alert(`Falha ao excluir pagamento: ${error.message}`);
             await refreshPagamentosVisiveis();
         }
     }
@@ -485,7 +504,7 @@ async function carregarDadosRelatorios() {
 
     } catch (error) {
          log.error("Erro ao carregar dados para relatórios:", error);
-         alert("Falha grave ao buscar produtores para o relatório.");
+         await api.dialog.alert("Falha grave ao buscar produtores para o relatório.");
     }
 
     ui.popularDropdownRelatorioProdutores(cacheProdutoresCompleto);
@@ -506,7 +525,7 @@ async function handleRelatorioProdutorSelecionado(event) {
         ui.desenharRelatorioDividas(dividas);
     } catch (error) {
         log.error(`Erro ao buscar relatório de dívidas para produtor ${produtorId}:`, error);
-        alert("Falha ao buscar relatório de dívidas.");
+        await api.dialog.alert("Falha ao buscar relatório de dívidas.");
         ui.desenharRelatorioDividas(null); 
     }
 }

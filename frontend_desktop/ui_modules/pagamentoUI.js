@@ -16,8 +16,20 @@ let pagamentoValorInput;
 let pagamentoDataInput;
 let pagamentoBtnLimpar;
 let pagamentoBtnCancelar;
+let pagamentoHistoricoContainer;
 
 let handlers = {};
+
+function _formatarData(dataISO) {
+    if (!dataISO) return 'N/A';
+    try {
+        const [ano, mes, dia] = dataISO.split('-');
+        return `${dia}/${mes}/${ano}`;
+    } catch (e) {
+        console.error("Erro ao formatar data:", dataISO, e);
+        return dataISO; 
+    }
+}
 
 function _inicializarDOM() {
     pagamentosSelectExecucao = document.getElementById('pagamentos-select-execucao');
@@ -38,6 +50,7 @@ function _inicializarDOM() {
     pagamentoDataInput = document.getElementById('pagamento-data');
     pagamentoBtnLimpar = document.getElementById('pagamento-btn-limpar');
     pagamentoBtnCancelar = document.getElementById('pagamento-btn-cancelar');
+    pagamentoHistoricoContainer = document.getElementById('pagamento-historico-container');
     console.log("PagamentoUI: Elementos DOM 'cacheados'.");
 }
 
@@ -142,7 +155,7 @@ export function popularListaAgendamentosPagos(execucoes) {
         }
 
         item.innerHTML = `
-            <strong>${exec.data_execucao}</strong> - ${nomeDisplay}
+            <strong>${_formatarData(exec.data_execucao)}</strong> - ${nomeDisplay}
             <br>
             (Serviço: ${exec.servico_nome} - R$ ${exec.valor_total.toFixed(2)})
         `;
@@ -151,13 +164,15 @@ export function popularListaAgendamentosPagos(execucoes) {
 }
 
 function mostrarAreaDetalhesPagamento(mostrar) {
-    if (!pagamentosDetalhesDiv || !pagamentoForm || !pagamentoFormPlaceholder || !listaPagamentosUl) return;
+    if (!pagamentosDetalhesDiv || !pagamentoForm || !pagamentoFormPlaceholder || !listaPagamentosUl || !pagamentoHistoricoContainer) return;
 
     pagamentosDetalhesDiv.style.display = mostrar ? 'block' : 'none';
 
     pagamentoForm.style.display = mostrar ? 'block' : 'none';
 
     pagamentoFormPlaceholder.style.display = mostrar ? 'none' : 'block';
+
+    pagamentoHistoricoContainer.style.display = mostrar ? 'block' : 'none';
 
     if (!mostrar) {
         listaPagamentosUl.innerHTML = '<li>Selecione um agendamento para ver os pagamentos.</li>';
@@ -205,9 +220,11 @@ export function desenharListaPagamentos(pagamentos) {
         const buttonsContainer = document.createElement('div');
         const btnEditar = document.createElement('button');
         btnEditar.textContent = 'Editar';
+        btnEditar.classList.add('btn-secondary', 'btn-action');
         btnEditar.onclick = () => handlers.onEditPagamento(p); 
         const btnExcluir = document.createElement('button');
         btnExcluir.textContent = 'Excluir';
+        btnExcluir.classList.add('btn-delete', 'btn-action');
         btnExcluir.onclick = () => handlers.onDeletePagamento(p.id); 
         buttonsContainer.appendChild(btnEditar);
         buttonsContainer.appendChild(btnExcluir);
