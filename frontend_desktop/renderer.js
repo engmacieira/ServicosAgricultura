@@ -52,16 +52,20 @@ async function handleSaveProdutor(event) {
             if (!produtorSalvo || produtorSalvo.error) throw new Error(produtorSalvo?.error || "API não retornou o produtor atualizado.");
             
             alert(`Produtor "${produtorSalvo.nome}" atualizado!`);
-            
-            await carregarProdutores(produtoresPaginaAtual); 
-            
+
+            setTimeout(async () => {
+                await carregarProdutores(produtoresPaginaAtual); 
+            }, 0);
+
         } else {
             produtorSalvo = await api.createProdutor(dadosProdutor);
             if (!produtorSalvo || produtorSalvo.error) throw new Error(produtorSalvo?.error || "API não retornou o novo produtor.");
             
             alert(`Produtor "${produtorSalvo.nome}" criado com ID: ${produtorSalvo.id}`);
             
-            await carregarProdutores(1); 
+            setTimeout(async () => {
+                await carregarProdutores(1); 
+            }, 0);
         }
         
         ui.limparFormularioProdutor();
@@ -87,7 +91,9 @@ async function handleDeleteProdutor(id) {
         try {
             await api.deleteProdutor(id);
             alert(`Produtor ID ${id} excluído com sucesso.`);
-            await carregarProdutores(produtoresPaginaAtual);
+            setTimeout(async () => {
+                await carregarProdutores(produtoresPaginaAtual);
+            }, 0);
             ui.limparFormularioProdutor();
             relatorioProdutoresCarregado = false;
         } catch (error) {
@@ -127,7 +133,9 @@ async function handleSaveServico(event) {
             
             alert(`Serviço "${servicoSalvo.nome}" atualizado!`);
 
-            await carregarServicos(servicosPaginaAtual);
+            setTimeout(async () => {
+                await carregarServicos(servicosPaginaAtual);
+            }, 0);
             
         } else {
             servicoSalvo = await api.createServico(dadosServico);
@@ -135,7 +143,9 @@ async function handleSaveServico(event) {
             
             alert(`Serviço "${servicoSalvo.nome}" criado com ID: ${servicoSalvo.id}`);
 
-            await carregarServicos(1);
+            setTimeout(async () => {
+                await carregarServicos(1);
+            }, 0);
         }
         
         ui.limparFormularioServico();
@@ -160,7 +170,9 @@ async function handleDeleteServico(id) {
         try {
             await api.deleteServico(id);
             alert(`Serviço ID ${id} excluído com sucesso.`);
-            await carregarServicos(servicosPaginaAtual); 
+            setTimeout(async () => {
+                await carregarServicos(servicosPaginaAtual); 
+            }, 0);
             ui.limparFormularioServico();
         } catch (error) {
             log.error(`Erro ao excluir serviço ${id}:`, error);
@@ -267,8 +279,10 @@ async function handleDeleteExecucao(id) {
             if (resultado && resultado.error) throw new Error(resultado.error);
             alert(`Agendamento ID ${id} excluído com sucesso.`);
             pagamentosDropdownCarregado = false; 
-            historicoCarregadoPrimeiraVez = false; 
-            await carregarExecucoes(historicoPaginaAtual); 
+            historicoCarregadoPrimeiraVez = false;
+            setTimeout(async () => { 
+                await carregarExecucoes(historicoPaginaAtual); 
+            }, 0);
         } catch (error) {
             log.error(`Erro ao excluir execução ${id}:`, error);
             alert(`Falha ao excluir agendamento: ${error.message}`);
@@ -371,6 +385,7 @@ async function handleSavePagamento(event) {
                 cachePagamentosAtuais[index] = pagamentoSalvo;
             }
             alert(`Pagamento ID ${pagamentoSalvo.id} atualizado!`);
+            pagamentosDropdownCarregado = false;
 
         } else {
             log.info(`Criando pagamento para execução ID: ${execucaoIdSelecionada}`);
@@ -380,6 +395,7 @@ async function handleSavePagamento(event) {
 
             cachePagamentosAtuais.push(pagamentoSalvo);
             alert(`Pagamento criado com ID: ${pagamentoSalvo.id}`);
+            pagamentosDropdownCarregado = false;
         }
 
         const selectElement = document.getElementById('pagamentos-select-execucao');
@@ -414,6 +430,7 @@ async function handleDeletePagamento(id) {
             const resultado = await api.deletePagamento(id);
             if (resultado && resultado.error) throw new Error(resultado.error);
             alert(`Pagamento ID ${id} excluído com sucesso.`);
+            pagamentosDropdownCarregado = false;
 
             cachePagamentosAtuais = cachePagamentosAtuais.filter(p => p.id != id);
 

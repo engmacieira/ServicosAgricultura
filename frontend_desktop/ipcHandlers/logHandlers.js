@@ -3,15 +3,15 @@ const log = require('electron-log');
 
 function registerLogHandlers() {
 
-    ipcMain.handle('log:info', (event, ...args) => {
+    ipcMain.on('log:info', (event, ...args) => {
         log.info(...args);
     });
 
-    ipcMain.handle('log:warn', (event, ...args) => {
+    ipcMain.on('log:warn', (event, ...args) => {
         log.warn(...args);
     });
 
-    ipcMain.handle('log:error', (event, ...args) => {
+    ipcMain.on('log:error', (event, ...args) => {
         log.error(...args);
     });
 

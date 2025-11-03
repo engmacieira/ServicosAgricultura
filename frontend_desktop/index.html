@@ -291,6 +291,27 @@
             </div>
         </section>
 
+    <section id="painel-relatorios" class="tab-pane" 
+                 role="tabpanel" aria-labelledby="tab-relatorios">
+            
+            <h2>Relatório de Dívidas por Produtor</h2>
+
+            <div id="relatorio-header">
+                <label for="relatorio-select-produtor">Selecione o Produtor:</label>
+                <select id="relatorio-select-produtor">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+
+            <div id="relatorio-container">
+                <h3>Dívidas Pendentes</h3>
+                <ul id="lista-relatorio-dividas">
+                    <li>Selecione um produtor acima.</li>
+                </ul>
+            </div>
+            
+        </section>
+
     </main>
 
     <script type="module" src="./renderer.js"></script>

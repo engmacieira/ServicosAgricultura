@@ -35,9 +35,9 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   log: {
-    info: (...args) => ipcRenderer.invoke('log:info', ...args),
-    warn: (...args) => ipcRenderer.invoke('log:warn', ...args),
-    error: (...args) => ipcRenderer.invoke('log:error', ...args)
+    info: (...args) => ipcRenderer.send('log:info', ...args),
+    warn: (...args) => ipcRenderer.send('log:warn', ...args),
+    error: (...args) => ipcRenderer.send('log:error', ...args)
   }
 
 });
