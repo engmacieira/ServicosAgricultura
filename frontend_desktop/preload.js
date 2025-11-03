@@ -2,12 +2,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
 
-  getProdutores: (page, searchTerm) => ipcRenderer.invoke('get-produtores', page, searchTerm), 
+  getProdutores: (page, searchTerm, perPage) => ipcRenderer.invoke('get-produtores', page, searchTerm, perPage), 
   createProdutor: (produtorData) => ipcRenderer.invoke('create-produtor', produtorData),
   updateProdutor: (produtorId, produtorData) => ipcRenderer.invoke('update-produtor', produtorId, produtorData),
   deleteProdutor: (produtorId) => ipcRenderer.invoke('delete-produtor', produtorId),
 
-  getServicos: (page) => ipcRenderer.invoke('get-servicos', page), 
+  getServicos: (page, perPage) => ipcRenderer.invoke('get-servicos', page, perPage),
   createServico: (servicoData) => ipcRenderer.invoke('create-servico', servicoData),
   updateServico: (servicoId, servicoData) => ipcRenderer.invoke('update-servico', servicoId, servicoData),
   deleteServico: (servicoId) => ipcRenderer.invoke('delete-servico', servicoId),

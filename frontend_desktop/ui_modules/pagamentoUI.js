@@ -120,6 +120,18 @@ export function popularListaAgendamentosPagos(execucoes) {
 
     execucoes.forEach(exec => {
         const item = document.createElement('li');
+
+        item.style.cursor = 'pointer';
+        
+        item.onmouseenter = () => { item.style.backgroundColor = '#f0f0f0'; };
+        item.onmouseleave = () => { item.style.backgroundColor = 'transparent'; };
+
+        item.onclick = () => {
+            if (handlers.onAgendamentoPagoSelecionado) {
+                handlers.onAgendamentoPagoSelecionado(exec); 
+            }
+        };
+
         item.style.fontSize = '0.9em';
         item.style.padding = '5px';
         item.style.borderBottom = '1px solid #eee';

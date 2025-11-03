@@ -464,3 +464,56 @@ form div.form-row-aligned > label {
     margin-bottom: 0;
     flex-shrink: 0; 
 }
+
+/* ===================================================
+ * 11. REATORAÇÃO "LUXO" - PAINEL PAGAMENTOS
+ * =================================================== */
+
+/* 1. Layout da Seção */
+#painel-pagamentos {
+    /* Sobrescreve a regra global para esta aba específica */
+    display: flex;
+    gap: 20px;
+}
+#pagamentos-coluna-selecao {
+    flex: 1;
+    min-width: 400px; /* Garante espaço para os detalhes */
+}
+#pagamentos-coluna-detalhes {
+    flex: 1.5; /* Um pouco mais de espaço para o form/lista */
+    border-left: 2px solid var(--color-light-border);
+    padding-left: 20px;
+}
+#pagamentos-detalhes-execucao h3 {
+    margin-top: 0;
+}
+#agendamentos-pagos-container h3,
+#pagamento-historico-container h3 {
+    margin-top: 30px; /* Espaçamento entre os blocos */
+}
+
+
+/* 2. O FORMULÁRIO "CAMALEÃO" (A MÁGICA)
+ * * Usamos :has() para detectar quando o botão "Cancelar" está visível.
+ * (ou seja, quando o style NÃO contém "display: none")
+ *
+ * Isso cria um "Modo de Edição" visual.
+*/
+form#pagamento-form:has(#pagamento-btn-cancelar:not([style*="display: none"])) {
+    /* Destaque visual forte! */
+    background-color: #fffaf0; /* Amarelo bem claro */
+    border: 2px solid var(--color-brand-secondary); /* Borda Dourada */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* 3. Oculta o <h3> "Novo Pagamento" quando estamos editando */
+form#pagamento-form:has(#pagamento-btn-cancelar:not([style*="display: none"])) h3 {
+    display: none;
+}
+
+/* 4. Esconde o botão "Limpar" no modo de edição (não faz sentido) */
+form#pagamento-form:has(#pagamento-btn-cancelar:not([style*="display: none"])) #pagamento-btn-limpar {
+    display: none;
+}

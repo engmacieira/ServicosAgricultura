@@ -6,8 +6,9 @@ const API_URL = 'http://127.0.0.1:5000';
 
 function registerServicoHandlers() {
 
-    ipcMain.handle('get-servicos', async (event, page) => { 
+    ipcMain.handle('get-servicos', async (event, page, perPage) => { 
         try {
+            const itemsPerPage = perPage || 10;
             const response = await fetch(`${API_URL}/api/servicos?page=${page || 1}&per_page=10`);
             if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
             return await response.json();

@@ -19,13 +19,14 @@ let historicoPaginaAtual = 1;
 let historicoTotalPaginas = 1;
 let historicoSearchTerm = null;
 let produtorSearchTerm = null;
+let cacheProdutoresCompleto = [];
+let cacheServicosCompleto = [];
 
 async function carregarProdutores(page = 1, search = produtorSearchTerm) {
     try {
         log.info(`Buscando produtores - Página ${page}`);
         const paginatedData = await api.getProdutores(page, search);
         
-        cacheProdutores = paginatedData.produtores; 
         produtoresPaginaAtual = paginatedData.current_page;
         produtoresTotalPaginas = paginatedData.total_pages || 1;
         produtorSearchTerm = search;
@@ -38,6 +39,7 @@ async function carregarProdutores(page = 1, search = produtorSearchTerm) {
     }
 }
 async function handleSaveProdutor(event) {
+    cacheProdutoresCompleto = [];
     event.preventDefault(); 
     const id = ui.getIdProdutor();
     const dadosProdutor = ui.coletarDadosProdutor();
@@ -80,6 +82,7 @@ function handleEditProdutor(produtor) {
     ui.preencherFormularioProdutor(produtor);
 }
 async function handleDeleteProdutor(id) {
+    cacheProdutoresCompleto = [];
     if (confirm(`Tem certeza que deseja excluir o produtor ID ${id}?`)) {
         try {
             await api.deleteProdutor(id);
@@ -99,7 +102,6 @@ async function carregarServicos(page = 1) {
         log.info(`Buscando serviços - Página ${page}`);
         const paginatedData = await api.getServicos(page);
 
-        cacheServicos = paginatedData.servicos; 
         servicosPaginaAtual = paginatedData.current_page;
         servicosTotalPaginas = paginatedData.total_pages || 1;
 
@@ -111,6 +113,7 @@ async function carregarServicos(page = 1) {
     }
 }
 async function handleSaveServico(event) {
+    cacheServicosCompleto = [];
     event.preventDefault();
     const id = ui.getIdServico();
     const dadosServico = ui.coletarDadosServico();
@@ -152,6 +155,7 @@ function handleEditServico(servico) {
     ui.preencherFormularioServico(servico);
 }
 async function handleDeleteServico(id) {
+    cacheServicosCompleto = []; 
     if (confirm(`Tem certeza que deseja excluir o serviço ID ${id}?`)) {
         try {
             await api.deleteServico(id);
@@ -219,15 +223,19 @@ async function carregarExecucoes(page = 1, search = historicoSearchTerm) {
 async function carregarDadosAgendamento() {
     log.info("Carregando dados para dropdowns de agendamento...");
     try {
-        if (cacheProdutores.length === 0) {
-            cacheProdutores = await api.getProdutores();
+        if (cacheProdutoresCompleto.length === 0) {
+            log.info("Cache de produtores completo vazio. Buscando todos (9999)...");
+            const produtorData = await api.getProdutores(1, null, 9999); 
+            cacheProdutoresCompleto = produtorData.produtores;
         }
-        if (cacheServicos.length === 0) {
-            cacheServicos = await api.getServicos();
+        if (cacheServicosCompleto.length === 0) {
+            log.info("Cache de serviços completo vazio. Buscando todos (9999)...");
+            const servicoData = await api.getServicos(1, 9999);
+            cacheServicosCompleto = servicoData.servicos;
         }
         
-        ui.popularDropdownProdutores(cacheProdutores);
-        ui.popularDropdownServicos(cacheServicos);
+        ui.popularDropdownProdutores(cacheProdutoresCompleto);
+        ui.popularDropdownServicos(cacheServicosCompleto);
         
         log.info("Dropdowns de agendamento populados.");
     } catch (error) {
@@ -267,7 +275,6 @@ async function handleDeleteExecucao(id) {
         }
     }
 }
-
 async function carregarDadosPagamentos() {
     if (pagamentosDropdownCarregado) return;
     log.info("Carregando dados para dropdown de pagamentos (Pendentes e Pagas)...");
@@ -291,32 +298,53 @@ async function carregarDadosPagamentos() {
         ui.popularListaAgendamentosPagos([]);
     }
 }
+async function _carregarDetalhesExecucao(execucao) {
+    if (!execucao || !execucao.id) {
+        ui.exibirDetalhesExecucaoPagamentos(null, null, null, []);
+        ui.desenharListaPagamentos([], handleEditPagamento, handleDeletePagamento);
+        return;
+    }
+
+    try {
+        const execucaoId = execucao.id;
+        log.info(`Buscando pagamentos para execução ID: ${execucaoId}`);
+        
+        const nomeProdutor = execucao.produtor_nome + (execucao.produtor_apelido ? ` (${execucao.produtor_apelido})` : '');
+        const nomeServico = execucao.servico_nome;
+        
+        const pagamentos = await api.getPagamentosPorExecucao(execucaoId);
+        cachePagamentosAtuais = pagamentos;
+        
+        ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, cachePagamentosAtuais);
+        ui.desenharListaPagamentos(cachePagamentosAtuais, handleEditPagamento, handleDeletePagamento);
+        ui.limparFormularioPagamento(); 
+    } catch (error) {
+        log.error(`Erro ao buscar pagamentos para execução ${execucao.id}:`, error);
+        alert("Falha ao buscar pagamentos para a execução selecionada.");
+        ui.exibirDetalhesExecucaoPagamentos(null, null, null, []);
+        ui.desenharListaPagamentos([], handleEditPagamento, handleDeletePagamento);
+    }
+}
 async function handleExecucaoSelecionada(event) {
     const selectElement = event.target;
     const selectedOption = selectElement.options[selectElement.selectedIndex];
     const execucaoId = selectedOption.value;
 
     if (!execucaoId) {
-        ui.exibirDetalhesExecucaoPagamentos(null, null, null, []);
-        ui.desenharListaPagamentos([], handleEditPagamento, handleDeletePagamento);
+        await _carregarDetalhesExecucao(null);
         return;
     }
-    try {
-        log.info(`Buscando pagamentos para execução ID: ${execucaoId}`);
-        const execucao = JSON.parse(selectedOption.dataset.execucao);
-        const nomeProdutor = selectedOption.dataset.produtorNome;
-        const nomeServico = selectedOption.dataset.servicoNome;
-        const pagamentos = await api.getPagamentosPorExecucao(execucaoId);
-        cachePagamentosAtuais = pagamentos;
-        ui.exibirDetalhesExecucaoPagamentos(execucao, nomeProdutor, nomeServico, cachePagamentosAtuais);
-        ui.desenharListaPagamentos(cachePagamentosAtuais, handleEditPagamento, handleDeletePagamento);
-        ui.limparFormularioPagamento(); 
-    } catch (error) {
-        log.error(`Erro ao buscar pagamentos para execução ${execucaoId}:`, error);
-        alert("Falha ao buscar pagamentos para a execução selecionada.");
-        ui.exibirDetalhesExecucaoPagamentos(null, null, null, []);
-        ui.desenharListaPagamentos([], handleEditPagamento, handleDeletePagamento);
-    }
+    
+    const execucao = JSON.parse(selectedOption.dataset.execucao);
+    await _carregarDetalhesExecucao(execucao); 
+}
+async function handleAgendamentoPagoSelecionado(execucao) {
+    log.info(`Item pago clicado. Carregando detalhes para Exec. ID: ${execucao.id}`);
+    
+    const selectElement = document.getElementById('pagamentos-select-execucao');
+    if (selectElement) selectElement.value = '';
+
+    await _carregarDetalhesExecucao(execucao); 
 }
 async function handleSavePagamento(event) {
     event.preventDefault();
@@ -432,16 +460,19 @@ async function carregarDadosRelatorios() {
     log.info("Carregando produtores para dropdown de relatórios...");
     
     try {
-        if (cacheProdutores.length === 0) cacheProdutores = await api.getProdutores();
-        ui.popularDropdownRelatorioProdutores(cacheProdutores);
-        relatorioProdutoresCarregado = true;
-        log.info("Dropdown de relatórios populado.");
+        if (cacheProdutoresCompleto.length === 0) {
+            log.info("Cache de produtores completo vazio. Buscando todos (9999)...");
+            const produtorData = await api.getProdutores(1, null, 9999); 
+            cacheProdutoresCompleto = produtorData.produtores;
+            }        
 
     } catch (error) {
          log.error("Erro ao carregar dados para relatórios:", error);
          alert("Falha grave ao buscar produtores para o relatório.");
-         ui.popularDropdownRelatorioProdutores([]); 
     }
+
+    ui.popularDropdownRelatorioProdutores(cacheProdutoresCompleto);
+    relatorioProdutoresCarregado = true; 
 }
 async function handleRelatorioProdutorSelecionado(event) {
     const selectElement = event.target;
@@ -587,5 +618,6 @@ ui.inicializarApp({
     onCancelEditPagamento: handleCancelEditPagamento,
     onEditPagamento: handleEditPagamento,
     onDeletePagamento: handleDeletePagamento,
+    onAgendamentoPagoSelecionado: handleAgendamentoPagoSelecionado,
     onRelatorioProdutorSelecionado: handleRelatorioProdutorSelecionado
 });

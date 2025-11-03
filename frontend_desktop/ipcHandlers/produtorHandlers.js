@@ -6,9 +6,10 @@ const API_URL = 'http://127.0.0.1:5000';
 
 function registerProdutorHandlers() {
 
-    ipcMain.handle('get-produtores', async (event, page, searchTerm) => { 
+    ipcMain.handle('get-produtores', async (event, page, searchTerm, perPage) => { 
         try {
-            let url = `${API_URL}/api/produtores?page=${page || 1}&per_page=10`;
+            const itemsPerPage = perPage || 10;
+            let url = `${API_URL}/api/produtores?page=${page || 1}&per_page=${itemsPerPage}`;
             
             if (searchTerm) {
                 url += `&q=${encodeURIComponent(searchTerm)}`;

@@ -60,7 +60,8 @@ export function inicializarApp(handlers) {
             onClearPagamento: handlers.onClearPagamento,
             onCancelEditPagamento: handlers.onCancelEditPagamento,
             onEditPagamento: handlers.onEditPagamento,
-            onDeletePagamento: handlers.onDeletePagamento
+            onDeletePagamento: handlers.onDeletePagamento,
+            onAgendamentoPagoSelecionado: handlers.onAgendamentoPagoSelecionado
         });
 
         relatorioUI.inicializar({

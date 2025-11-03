@@ -225,7 +225,8 @@
                  role="tabpanel" aria-labelledby="tab-pagamentos">
             
             <div id="pagamentos-coluna-selecao">
-                <h2>Registro de Pagamentos</h2>
+                <h2>Seleção de Agendamento</h2>
+                
                 <div>
                     <label for="pagamentos-select-execucao">Agendamento:</label>
                     <select id="pagamentos-select-execucao">
@@ -233,33 +234,8 @@
                     </select>
                 </div>
 
-                <div id="pagamento-form-placeholder">
-                    <p>Selecione um agendamento acima para registrar pagamentos.</p>
-                </div>
-
-                <form id="pagamento-form" style="display: none;">
-                    <h3>Novo Pagamento</h3>
-                    <input type="hidden" id="pagamento-id">
-                    <input type="hidden" id="pagamento-execucao-id">
-                    <div>
-                        <label for="pagamento-valor">Valor Pago (*):</label>
-                        <input type="number" id="pagamento-valor" step="0.01" min="0.01" required>
-                    </div>
-                    <div>
-                        <label for="pagamento-data">Data (*):</label>
-                        <input type="date" id="pagamento-data" required>
-                    </div>
-                    <div class="form-buttons">
-                        <button type="submit" class="btn-primary">Salvar Pagamento</button>
-                        <button type="button" id="pagamento-btn-limpar" class="btn-secondary">Limpar</button>
-                        <button type="button" id="pagamento-btn-cancelar" style="display: none;" class="btn-secondary">Cancelar Edição</button>
-                    </div>
-                </form>
-            </div>
-
-            <div id="pagamentos-coluna-detalhes">
-                <h2>Detalhes e Histórico</h2>
-                <div id="pagamentos-detalhes-execucao" style="display: none;">
+                <div id="pagamentos-detalhes-execucao" style="display: none; margin-top: 20px;">
+                    <h3>Detalhes do Agendamento</h3>
                     <p><strong>Produtor:</strong> <span id="detalhe-produtor-nome"></span></p>
                     <p><strong>Serviço:</strong> <span id="detalhe-servico-nome"></span></p>
                     <p><strong>Data:</strong> <span id="detalhe-data"></span></p>
@@ -271,33 +247,48 @@
                         <span>R$ <span id="detalhe-saldo-devedor">0.00</span></span>
                     </div>
                 </div>
-                <div id="agendamentos-pagos-container" style="margin-top: 20px;">
+
+                 <div id="agendamentos-pagos-container" style="margin-top: 30px;">
                     <h3>Agendamentos 100% Pagos</h3>
                     <ul id="lista-agendamentos-pagos">
                         <li>Nenhum agendamento pago encontrado.</li>
                     </ul>
                 </div>
-                <h3>Pagamentos Registrados</h3>
-                <ul id="lista-pagamentos">
-                    <li>Selecione um agendamento para ver os pagamentos.</li>
-                </ul>
-            </div>
-        </section>
-
-        <section id="painel-relatorios" class="tab-pane" 
-                 role="tabpanel" aria-labelledby="tab-relatorios">
-            <h2>Relatório de Dívidas por Produtor</h2>
-            <div id="relatorio-header">
-                <label for="relatorio-select-produtor">Selecione o Produtor:</label>
-                <select id="relatorio-select-produtor">
-                    <option value="">Carregando produtores...</option>
-                </select>
             </div>
 
-            <h3>Dívidas em Aberto</h3>
-            <ul id="lista-relatorio-dividas">
-                <li>Selecione um produtor para ver o relatório.</li>
-            </ul>
+            <div id="pagamentos-coluna-detalhes">
+                <div id="pagamento-form-placeholder">
+                    <p>Selecione um agendamento na coluna ao lado para iniciar.</p>
+                </div>
+                
+                <form id="pagamento-form" style="display: none;">
+                    
+                    <h3 id="pagamento-form-title">Novo Pagamento</h3>
+                    
+                    <input type="hidden" id="pagamento-id">
+                    <input type="hidden" id="pagamento-execucao-id">
+                    <div>
+                        <label for="pagamento-valor">Valor Pago (*):</label>
+                        <input type="number" id="pagamento-valor" step="0.01" min="0.01" required>
+                    </div>
+                    <div>
+                        <label for="pagamento-data">Data (*):</label>
+                        <input type="date" id="pagamento-data" required>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn-primary" id="pagamento-btn-salvar">Salvar Pagamento</button>
+                        <button type="button" id="pagamento-btn-limpar" class="btn-secondary">Limpar</button>
+                        <button type="button" id="pagamento-btn-cancelar" style="display: none;" class="btn-secondary">Cancelar Edição</button>
+                    </div>
+                </form>
+                
+                <div id="pagamento-historico-container" style="display: none; margin-top: 30px;">
+                    <h3>Pagamentos Registrados</h3>
+                    <ul id="lista-pagamentos">
+                        <li>Selecione um agendamento para ver os pagamentos.</li>
+                    </ul>
+                </div>
+            </div>
         </section>
 
     </main>
