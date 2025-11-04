@@ -603,21 +603,34 @@ async function handleHistoricoClearSearch() {
 
 async function handleListBackups() {
     log.info("Buscando lista de backups...");
-    // TODO: Chamar api.listBackups()
-    ui.desenharListaBackups([]); // Por enquanto, desenha vazio
+    try {
+        const backupFiles = await api.adminListBackups();
+        if (backupFiles.erro) throw new Error(backupFiles.erro);
+        ui.desenharListaBackups(backupFiles);   
+    } catch (error) {
+        log.error("Falha ao desenhar lista de backups:", error);
+        ui.desenharListaBackups([]); 
+    }
 }
 
 async function handleManualBackup() {
     log.warn("Solicitando backup manual...");
-    // TODO: Chamar api.createBackup()
-    await api.dialog.alert("Backup manual solicitado!");
-    await handleListBackups(); // Atualiza a lista
+    try {
+        const resultado = await api.adminRunBackup();
+        if (resultado.sucesso) {
+            await api.dialog.alert(resultado.mensagem);
+        } else {
+            throw new Error(resultado.erro);
+        }
+    } catch (error) {
+         await api.dialog.alert(`Falha ao criar backup manual:\n${error.message}`);
+    }
+    await handleListBackups(); 
 }
 
 async function handleRestoreBackup(filename) {
     log.warn(`Solicitando RESTAURAÇÃO do backup: ${filename}`);
     if (await api.dialog.confirm(`ATENÇÃO!\n\nTem certeza que deseja restaurar o backup "${filename}"?\n\nTODOS os dados atuais serão PERDIDOS e substituídos pelo backup.`)) {
-        // TODO: Chamar api.restoreBackup(filename)
         await api.dialog.alert("Restauração solicitada! A aplicação será reiniciada.");
     }
 }
@@ -625,15 +638,13 @@ async function handleRestoreBackup(filename) {
 async function handleDeleteBackup(filename) {
     log.warn(`Solicitando EXCLUSÃO do backup: ${filename}`);
      if (await api.dialog.confirm(`Tem certeza que deseja EXCLUIR PERMANENTEMENTE o backup "${filename}"?`)) {
-        // TODO: Chamar api.deleteBackup(filename)
         await api.dialog.alert("Backup excluído.");
-        await handleListBackups(); // Atualiza a lista
+        await handleListBackups(); 
     }
 }
 
 async function handleVerExcluidos(tipo) {
     log.info(`Buscando itens excluídos do tipo: ${tipo}`);
-    // TODO: Chamar api.getDeleted(tipo)
 }
 
 async function handleImportar(tipo) {
@@ -651,13 +662,11 @@ async function handleImportar(tipo) {
     }
 
     try {
-        // CHAMA A API E ESPERA A RESPOSTA
         const resultado = await api.adminImportar(tipo, filePath);
 
         if (resultado && resultado.sucesso) {
             await api.dialog.alert(`Importação Concluída!\n\n${resultado.mensagem}`);
             
-            // Limpa caches relevantes se a importação foi de produtores/serviços
             if (tipo === 'produtores') {
                 cacheProdutoresCompleto = [];
                 relatorioProdutoresCarregado = false;
@@ -668,7 +677,6 @@ async function handleImportar(tipo) {
                 agendamentoDropdownsCarregados = false;
             }
         } else {
-            // Se a API retornou um erro estruturado
             const erroMsg = resultado.erros ? resultado.erros.join('\n') : (resultado.erro || "A API retornou uma falha sem detalhes.");
             throw new Error(erroMsg);
         }
@@ -677,7 +685,6 @@ async function handleImportar(tipo) {
         log.error(`Falha grave ao importar ${tipo}:`, error);
         await api.dialog.alert(`Erro na Importação de ${tipo}:\n\n${error.message}`);
     } finally {
-        // Limpa o seletor de arquivo, independentemente de sucesso ou falha
         fileInput.value = null; 
     }
 }

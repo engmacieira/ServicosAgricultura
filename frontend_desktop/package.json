@@ -1,5 +1,5 @@
 {
-  "name": "frontend_desktop",
+  "name": "gestor-sol",
   "version": "1.0.1",
   "description": "Sistema de Gestão de Serviços Agrícolas",
   "main": "main.js",
@@ -31,6 +31,9 @@
     "ui.js",
     "logo.jpg",
     "ui_modules/",
+    "ipcHandlers/", 
+    "build/icon.ico", 
+    "LICENSE.md", 
     "node_modules/",
     "package.json"
   ],
@@ -38,6 +41,15 @@
     "target": "nsis",
     "icon": "build/icon.ico"
   },
+  "extraResources": [
+      {
+        "from": "backend_resources",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,

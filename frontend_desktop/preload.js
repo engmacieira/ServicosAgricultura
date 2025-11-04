@@ -37,6 +37,9 @@ contextBridge.exposeInMainWorld('api', {
   adminImportar: (tipo, filePath) => {
     return ipcRenderer.invoke('admin:importar', tipo, filePath);
   },
+
+  adminRunBackup: () => ipcRenderer.invoke('admin:run-backup'),
+  adminListBackups: () => ipcRenderer.invoke('admin:list-backups'),
   
   dialog: {
     alert: (message) => ipcRenderer.invoke('dialog:alert', message),

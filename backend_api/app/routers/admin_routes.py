@@ -1,7 +1,11 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 import logging
 import pandas as pd
 import math 
+
+import os
+import shutil
+from datetime import datetime
 
 import app.repositories.produtor_repository as produtor_repository
 import app.repositories.servico_repository as servico_repository
@@ -239,3 +243,93 @@ def importar_dados_api(tipo):
             "erro": mensagem_erro,
             "erros": erros
         }), 400
+
+MAX_BACKUPS = 10 
+
+def get_timestamp():
+    return datetime.now().isoformat().split('.')[0].replace(':', '-')
+
+def prune_old_backups(backup_dir):
+    try:
+        all_backups = sorted(
+            [f for f in os.listdir(backup_dir) if f.endswith('.db') and f.startswith('gestao_backup_')],
+            key=lambda f: os.path.getmtime(os.path.join(backup_dir, f))
+        )
+        
+        if len(all_backups) > MAX_BACKUPS:
+            files_to_delete = len(all_backups) - MAX_BACKUPS
+            old_backups = all_backups[:files_to_delete]
+            
+            for old_file in old_backups:
+                os.unlink(os.path.join(backup_dir, old_file))
+                logging.info(f"[Backup] Backup antigo removido: {old_file}")
+    except Exception as e:
+        logging.error(f"Erro ao limpar backups antigos: {e}")
+
+def run_backup_routine_api():
+    """ Executa a rotina de backup no lado do servidor (Python). """
+    try:
+        user_data_path = current_app.config['USER_DATA_PATH']
+        db_path = 'gestao.db'
+        backup_dir = os.path.join(user_data_path, 'backups_gestorsol')
+        logging.info(f"[Backup] Lendo DB de: {db_path}")
+        logging.info(f"[Backup] Salvando Backups em: {backup_dir}")
+        
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+            logging.info(f'[Backup] Pasta de backup criada: {backup_dir}')
+        
+        if not os.path.exists(db_path):
+             logging.error(f"[Backup] Falha: gestao.db não encontrado em {db_path}")
+             return False, "Banco de dados não encontrado"
+
+        backup_filename = f"gestao_backup_{get_timestamp()}.db"
+        backup_filepath = os.path.join(backup_dir, backup_filename)
+        
+        shutil.copyfile(db_path, backup_filepath)
+        logging.info(f"[Backup] Backup realizado com sucesso: {backup_filename}")
+        
+        prune_old_backups(backup_dir)
+        return True, backup_filename
+
+    except Exception as e:
+        logging.error(f"Falha grave ao realizar o backup: {e}")
+        return False, str(e)
+
+@admin_bp.route('/admin/backups', methods=['GET'])
+def list_backups_api():
+    """ Rota da API para listar os arquivos de backup existentes. """
+    user_data_path = current_app.config['USER_DATA_PATH']
+    backup_dir = os.path.join(user_data_path, 'backups_gestorsol')
+    try:
+        if not os.path.exists(backup_dir):
+            logging.info(f"[Backup] Pasta de backup '{backup_dir}' não encontrada. Criando...")
+            os.makedirs(backup_dir)
+            return jsonify([]), 200 
+
+        all_backups = sorted(
+            [f for f in os.listdir(backup_dir) if f.endswith('.db') and f.startswith('gestao_backup_')],
+            key=lambda f: os.path.getmtime(os.path.join(backup_dir, f)),
+            reverse=True 
+        )
+        return jsonify(all_backups), 200
+    
+    except Exception as e:
+        logging.error(f"Falha ao listar backups: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@admin_bp.route('/admin/backup', methods=['POST'])
+def run_backup_api():
+    """ Rota da API para acionar o backup manual ou automático. """
+    sucesso, mensagem = run_backup_routine_api()
+    
+    if sucesso:
+        return jsonify({
+            "sucesso": True,
+            "mensagem": f"Backup '{mensagem}' criado com sucesso."
+        }), 201
+    else:
+        return jsonify({
+            "sucesso": False,
+            "erro": f"Falha no backup: {mensagem}"
+        }), 500

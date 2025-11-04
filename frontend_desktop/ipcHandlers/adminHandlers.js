@@ -6,7 +6,6 @@ const API_URL = 'http://127.0.0.1:5000';
 
 function registerAdminHandlers() {
 
-    // Handler para a importação de dados
     ipcMain.handle('admin:importar', async (event, tipo, filePath) => {
         log.info(`[IPC Handler] Recebida solicitação de importação para '${tipo}' do arquivo: ${filePath}`);
         
@@ -22,7 +21,6 @@ function registerAdminHandlers() {
                 try { 
                     errorBody = await response.json(); 
                 } catch (e) { 
-                    // Ignora se o corpo não for JSON
                 }
                 const errorMessage = errorBody?.erro || `Erro na API: ${response.statusText}`;
                 throw new Error(errorMessage);
@@ -32,12 +30,43 @@ function registerAdminHandlers() {
 
         } catch (error) {
             log.error(`[IPC Handler] Falha ao importar dados '${tipo}':`, error);
-            // Retorna um objeto de erro padronizado para o renderer
             return { sucesso: false, erro: error.message || 'Erro desconhecido no IPC Handler' };
         }
     });
 
-    // (Aqui adicionaremos os handlers de backup/restore/soft-delete depois)
+ipcMain.handle('admin:run-backup', async () => {
+        log.info(`[IPC Handler] Recebida solicitação de backup manual...`);
+        try {
+            const response = await fetch(`${API_URL}/api/admin/backup`, { 
+                method: 'POST'
+            });
+            if (!response.ok) {
+                const errorBody = await response.json();
+                throw new Error(errorBody.erro || "Erro da API");
+            }
+            return await response.json();
+        } catch (error) {
+            log.error(`[IPC Handler] Falha no backup manual:`, error);
+            return { sucesso: false, erro: error.message };
+        }
+    });
+
+ipcMain.handle('admin:list-backups', async () => {
+        log.info(`[IPC Handler] Solicitando lista de backups da API...`);
+        try {
+            const response = await fetch(`${API_URL}/api/admin/backups`);
+            if (!response.ok) {
+                const errorBody = await response.json();
+                throw new Error(errorBody.erro || "Erro da API ao listar backups");
+            }
+            const files = await response.json(); // Espera um array de strings
+            return files;
+        } catch (error) {
+            log.error(`[IPC Handler] Falha ao listar backups:`, error);
+            return { erro: error.message };
+        }
+    });
+
 }
 
 module.exports = { registerAdminHandlers };

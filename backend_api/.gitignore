@@ -1,43 +1,59 @@
-# Senhas
+# ===================================================
+# ARQUIVOS DE SENHA E AMBIENTE (O MAIS IMPORTANTE)
+# ===================================================
 .env
+*.env
 
-# Ambiente Virtual
+# ===================================================
+# DEPENDÊNCIAS (NÃO ENVIAR BIBLIOTECAS)
+# ===================================================
+# Python
 venv/
 .venv/
-
-# Ignora dependências do Node.js
+# Node.js
 node_modules/
 
-# Arquivos de cache do Python
+# ===================================================
+# ARQUIVOS DE CACHE E DE SISTEMA
+# ===================================================
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Arquivos de IDE
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+# IDEs
 .idea/
 .vscode/
 
-# Arquivos e pastas de usuário
-.uploads/
-.babackup_app/
-.DocumentosSistema/
-
-# Arquivos de backup do banco
-*.dump
-
-# Arquivos de texto genéricos (para evitar senhas acidentais)
-*.txt
-
-# Arquivos zipados (backup da versões manuais)
-*.zip
-
-# Pasta de Backups (NOVO)
-/backups/
-
-# Planilhas
-*.xlsx
-
-# Arquivos de Log
+# ===================================================
+# LOGS E DADOS DO USUÁRIO
+# ===================================================
 *.log
 logs/
+# Banco de dados principal (NÃO queremos o banco no Git)
+*.db
+# Backups
+*.dump
+/backups/
+/backups_gestorsol/
+# Arquivos de usuário
+.uploads/
+*.xlsx
+*.zip
+*.txt
+
+# ===================================================
+# ARQUIVOS DE BUILD (NOVAS REGRAS)
+# ===================================================
+# PyInstaller (Backend Build)
+backend_api/build/
+backend_api/dist/
+backend_api/*.spec
+
+# Electron (Frontend Build)
+frontend_desktop/dist/
+# (Não precisamos ignorar 'build/icon.ico', pois queremos ele no Git)

@@ -3,15 +3,17 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-def create_app():
+def create_app(user_data_path):
     """
     Esta é a "Application Factory" (Fábrica de Aplicação).
     Ela cria, configura e "monta" nossa aplicação Flask.
     """
     app = Flask(__name__)
+    
+    app.config['USER_DATA_PATH'] = user_data_path   
 
     if not app.debug:
-        log_dir = os.path.join(app.root_path, 'logs')
+        log_dir = os.path.join(user_data_path, 'logs_backend')
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
