@@ -5,6 +5,7 @@ import * as agendamentoUI from './ui_modules/agendamentoUI.js';
 import * as historicoUI from './ui_modules/historicoUI.js';
 import * as pagamentoUI from './ui_modules/pagamentoUI.js';
 import * as relatorioUI from './ui_modules/relatorioUI.js';
+import * as adminUI from './ui_modules/adminUI.js';
 
 /**
  * PONTO DE ENTRADA PRINCIPAL DA UI
@@ -67,6 +68,14 @@ export function inicializarApp(handlers) {
         relatorioUI.inicializar({
             onRelatorioProdutorSelecionado: handlers.onRelatorioProdutorSelecionado
         });
+
+        adminUI.inicializar({
+            onManualBackup: handlers.onManualBackup,
+            onRestoreBackup: handlers.onRestoreBackup,
+            onDeleteBackup: handlers.onDeleteBackup,
+            onVerExcluidos: handlers.onVerExcluidos,
+            onImportar: handlers.onImportar
+        });
         
         handlers.onTabChange('painel-produtores');
 
@@ -112,3 +121,5 @@ export const getIdPagamento = pagamentoUI.getIdPagamento;
 
 export const popularDropdownRelatorioProdutores = relatorioUI.popularDropdownRelatorioProdutores;
 export const desenharRelatorioDividas = relatorioUI.desenharRelatorioDividas;
+
+export const desenharListaBackups = adminUI.desenharListaBackups;

@@ -1,4 +1,3 @@
-# app/__init__.py
 from flask import Flask
 import logging
 import os
@@ -11,68 +10,47 @@ def create_app():
     """
     app = Flask(__name__)
 
-    # --- NOSSA NOVA CONFIGURAÇÃO DE LOG ---
     if not app.debug:
-        # Cria a pasta de logs se ela não existir
         log_dir = os.path.join(app.root_path, 'logs')
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
-        # Configura o 'handler' do log para escrever em um arquivo
-        # maxBytes=10MB, backupCount=3 (mantém 3 arquivos antigos)
         file_handler = RotatingFileHandler(
             os.path.join(log_dir, 'backend.log'), 
             maxBytes=1024 * 1024 * 10, 
             backupCount=3
         )
         
-        # Define o formato da mensagem de log
         file_handler.setFormatter(logging.Formatter(
             '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
         ))
         
-        # Define o nível do log (só registra INFO e acima)
         app.logger.setLevel(logging.INFO)
         file_handler.setLevel(logging.INFO)
         
-        # Adiciona o 'handler' ao logger do app
         app.logger.addHandler(file_handler)
         
         app.logger.info('Servidor Backend (Flask) iniciado')
-    # --- FIM DA CONFIGURAÇÃO DE LOG ---
 
-
-    # --- Registro de Blueprints ---
-
-    # --- Registro de Blueprints ---
-    # Mark Construtor: Importamos todos os nossos módulos de rotas.
-    
-    # 1. Blueprint de Produtores
     from app.routers.produtor_routes import produtor_bp
     
-    # 2. Blueprint de Serviços
     from app.routers.servico_routes import servico_bp
     
-    # 3. Blueprint de Execuções
     from app.routers.execucao_routes import execucao_bp
     
-    # 4. Blueprint de Pagamentos
     from app.routers.pagamento_routes import pagamento_bp
     
-    # 5. Blueprint de Relatórios (NOVO)
     from app.routers.relatorio_routes import relatorio_bp
     
+    from app.routers.admin_routes import admin_bp
     
-    # Mark Construtor: Agora, registramos (plugamos) todos eles na aplicação.
+    app.register_blueprint(produtor_bp, url_prefix='/api')   
+    app.register_blueprint(servico_bp, url_prefix='/api')   
+    app.register_blueprint(execucao_bp, url_prefix='/api')   
+    app.register_blueprint(pagamento_bp, url_prefix='/api')  
+    app.register_blueprint(relatorio_bp, url_prefix='/api')
+    app.register_blueprint(admin_bp, url_prefix='/api')
     
-    app.register_blueprint(produtor_bp, url_prefix='/api')   # Rotas /api/produtores
-    app.register_blueprint(servico_bp, url_prefix='/api')    # Rotas /api/servicos
-    app.register_blueprint(execucao_bp, url_prefix='/api')   # Rotas /api/execucoes
-    app.register_blueprint(pagamento_bp, url_prefix='/api')  # Rotas /api/pagamentos e aninhadas
-    app.register_blueprint(relatorio_bp, url_prefix='/api')  # Rotas /api/relatorios (NOVO)
-    
-
-    # Rota de verificação de saúde (Health Check)
     @app.route('/health')
     def health_check():
         """Verifica se o servidor está no ar."""

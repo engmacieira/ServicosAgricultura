@@ -116,3 +116,13 @@ def delete_produtor(produtor_id: int):
         logging.error(f"Erro ao tentar fazer soft delete do Produtor ID {produtor_id}: {e}")
         conn.close()
         return False
+
+def get_produtor_by_nome(nome: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT produtor_id FROM produtores WHERE nome = ? AND deletado_em IS NULL", (nome,))
+    data = cursor.fetchone() 
+    conn.close()
+    if data:
+        return data['produtor_id']
+    return None

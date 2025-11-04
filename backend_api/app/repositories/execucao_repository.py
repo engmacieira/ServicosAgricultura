@@ -224,3 +224,22 @@ def delete_execucao(execucao_id: int):
         logging.error(f"Erro ao tentar fazer soft delete da Execucao ID {execucao_id}: {e}")
         conn.close()
         return False
+    
+def get_execucao_by_details(produtor_id: int, servico_id: int, data_execucao: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    sql = """
+        SELECT execucao_id FROM execucoes 
+        WHERE produtor_id = ? 
+          AND servico_id = ? 
+          AND data_execucao = ? 
+          AND deletado_em IS NULL
+    """
+    data_limpa = str(data_execucao).split(' ')[0]
+    
+    cursor.execute(sql, (produtor_id, servico_id, data_limpa))
+    data = cursor.fetchone()
+    conn.close()
+    if data:
+        return data['execucao_id']
+    return None

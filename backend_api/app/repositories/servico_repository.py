@@ -101,3 +101,13 @@ def delete_servico(servico_id: int):
         logging.error(f"Erro ao tentar fazer soft delete do Servico ID {servico_id}: {e}")
         conn.close()
         return False
+
+def get_servico_by_nome(nome: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT servico_id FROM servicos WHERE nome = ? AND deletado_em IS NULL", (nome,))
+    data = cursor.fetchone() 
+    conn.close()
+    if data:
+        return data['servico_id']
+    return None

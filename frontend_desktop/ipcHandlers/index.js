@@ -6,6 +6,7 @@ const { registerLogHandlers } = require('./logHandlers');
 const log = require('electron-log');
 
 const { registerRelatorioHandlers } = require('./relatorioHandlers');
+const { registerAdminHandlers } = require('./adminHandlers');
 
 function registerIpcHandlers() {
     console.log("Registrando handlers de IPC...");
@@ -16,6 +17,7 @@ function registerIpcHandlers() {
     registerPagamentoHandlers(); 
     
     registerRelatorioHandlers();
+    registerAdminHandlers();
 
     registerLogHandlers();
 

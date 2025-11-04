@@ -239,11 +239,20 @@ async function carregarDadosAgendamento() {
         if (cacheProdutoresCompleto.length === 0) {
             log.info("Cache de produtores completo vazio. Buscando todos (9999)...");
             const produtorData = await api.getProdutores(1, null, 9999); 
+            
+            if (produtorData.error) {
+                throw new Error(`Falha ao buscar produtores: ${produtorData.error}`);
+            }
             cacheProdutoresCompleto = produtorData.produtores;
         }
+        
         if (cacheServicosCompleto.length === 0) {
             log.info("Cache de serviços completo vazio. Buscando todos (9999)...");
             const servicoData = await api.getServicos(1, 9999);
+            
+            if (servicoData.error) {
+                 throw new Error(`Falha ao buscar serviços: ${servicoData.error}`);
+            }
             cacheServicosCompleto = servicoData.servicos;
         }
         
@@ -251,10 +260,12 @@ async function carregarDadosAgendamento() {
         ui.popularDropdownServicos(cacheServicosCompleto);
         
         log.info("Dropdowns de agendamento populados.");
+        
     } catch (error) {
-         log.error("Erro ao carregar histórico de execuções:", error);
-         await api.dialog.alert("Falha grave ao buscar histórico.");
-         ui.desenharListaExecucoes([], {}, {}, handleEditExecucao, handleDeleteExecucao); 
+         log.error("Erro ao carregar dados para agendamento:", error);
+         await api.dialog.alert(`Falha grave ao buscar dados para agendamento:\n${error.message}`);
+         ui.popularDropdownProdutores([]);
+         ui.popularDropdownServicos([]);
     }
 }
 async function handleEditExecucao(execucao) { 
@@ -590,6 +601,87 @@ async function handleHistoricoClearSearch() {
     await carregarExecucoes(1, null);
 }
 
+async function handleListBackups() {
+    log.info("Buscando lista de backups...");
+    // TODO: Chamar api.listBackups()
+    ui.desenharListaBackups([]); // Por enquanto, desenha vazio
+}
+
+async function handleManualBackup() {
+    log.warn("Solicitando backup manual...");
+    // TODO: Chamar api.createBackup()
+    await api.dialog.alert("Backup manual solicitado!");
+    await handleListBackups(); // Atualiza a lista
+}
+
+async function handleRestoreBackup(filename) {
+    log.warn(`Solicitando RESTAURAÇÃO do backup: ${filename}`);
+    if (await api.dialog.confirm(`ATENÇÃO!\n\nTem certeza que deseja restaurar o backup "${filename}"?\n\nTODOS os dados atuais serão PERDIDOS e substituídos pelo backup.`)) {
+        // TODO: Chamar api.restoreBackup(filename)
+        await api.dialog.alert("Restauração solicitada! A aplicação será reiniciada.");
+    }
+}
+
+async function handleDeleteBackup(filename) {
+    log.warn(`Solicitando EXCLUSÃO do backup: ${filename}`);
+     if (await api.dialog.confirm(`Tem certeza que deseja EXCLUIR PERMANENTEMENTE o backup "${filename}"?`)) {
+        // TODO: Chamar api.deleteBackup(filename)
+        await api.dialog.alert("Backup excluído.");
+        await handleListBackups(); // Atualiza a lista
+    }
+}
+
+async function handleVerExcluidos(tipo) {
+    log.info(`Buscando itens excluídos do tipo: ${tipo}`);
+    // TODO: Chamar api.getDeleted(tipo)
+}
+
+async function handleImportar(tipo) {
+    const fileInput = document.getElementById(`admin-import-file-${tipo}`);
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        await api.dialog.alert(`Por favor, selecione um arquivo Excel para importar ${tipo}.`);
+        return;
+    }
+    const filePath = fileInput.files[0].path;
+    log.warn(`Solicitando importação de ${tipo} do arquivo: ${filePath}`);
+    
+    if (!await api.dialog.confirm(`Iniciar importação de '${tipo}'?\n\nArquivo: ${filePath}\n\nIsso pode demorar alguns segundos.`)) {
+        fileInput.value = null;
+        return;
+    }
+
+    try {
+        // CHAMA A API E ESPERA A RESPOSTA
+        const resultado = await api.adminImportar(tipo, filePath);
+
+        if (resultado && resultado.sucesso) {
+            await api.dialog.alert(`Importação Concluída!\n\n${resultado.mensagem}`);
+            
+            // Limpa caches relevantes se a importação foi de produtores/serviços
+            if (tipo === 'produtores') {
+                cacheProdutoresCompleto = [];
+                relatorioProdutoresCarregado = false;
+                agendamentoDropdownsCarregados = false;
+            }
+            if (tipo === 'servicos') {
+                cacheServicosCompleto = [];
+                agendamentoDropdownsCarregados = false;
+            }
+        } else {
+            // Se a API retornou um erro estruturado
+            const erroMsg = resultado.erros ? resultado.erros.join('\n') : (resultado.erro || "A API retornou uma falha sem detalhes.");
+            throw new Error(erroMsg);
+        }
+
+    } catch (error) {
+        log.error(`Falha grave ao importar ${tipo}:`, error);
+        await api.dialog.alert(`Erro na Importação de ${tipo}:\n\n${error.message}`);
+    } finally {
+        // Limpa o seletor de arquivo, independentemente de sucesso ou falha
+        fileInput.value = null; 
+    }
+}
+
 /**
  * Esta é a função de callback que o ui.js chamará quando uma aba for trocada.
  * @param {string} painelId - O ID do painel que está sendo ativado.
@@ -614,6 +706,9 @@ function handleTabChange(painelId) {
             break;
         case 'painel-relatorios':
             carregarDadosRelatorios(); 
+            break;
+        case 'painel-admin':
+            handleListBackups(); 
             break;
     }
 }
@@ -655,5 +750,11 @@ ui.inicializarApp({
     onEditPagamento: handleEditPagamento,
     onDeletePagamento: handleDeletePagamento,
     onAgendamentoPagoSelecionado: handleAgendamentoPagoSelecionado,
-    onRelatorioProdutorSelecionado: handleRelatorioProdutorSelecionado
+    onRelatorioProdutorSelecionado: handleRelatorioProdutorSelecionado,
+
+    onManualBackup: handleManualBackup,
+    onRestoreBackup: handleRestoreBackup,
+    onDeleteBackup: handleDeleteBackup,
+    onVerExcluidos: handleVerExcluidos,
+    onImportar: handleImportar
 });

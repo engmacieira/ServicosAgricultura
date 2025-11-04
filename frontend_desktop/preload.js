@@ -34,6 +34,10 @@ contextBridge.exposeInMainWorld('api', {
     return ipcRenderer.invoke('get-relatorio-dividas', produtorId);
   },
 
+  adminImportar: (tipo, filePath) => {
+    return ipcRenderer.invoke('admin:importar', tipo, filePath);
+  },
+  
   dialog: {
     alert: (message) => ipcRenderer.invoke('dialog:alert', message),
     confirm: (message) => ipcRenderer.invoke('dialog:confirm', message)
