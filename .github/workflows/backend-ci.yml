@@ -29,5 +29,5 @@ jobs:
         working-directory: ./backend_api
 
       - name: 4. Rodar os testes (Pytest)
-        run: pytest
+        run: pytest --junit-xml=test-report.xml
         working-directory: ./backend_api
