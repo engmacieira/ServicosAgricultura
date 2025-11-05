@@ -45,6 +45,7 @@ logs/
 *.xlsx
 *.zip
 *.txt
+!requirements.txt
 
 # ===================================================
 # ARQUIVOS DE BUILD (NOVAS REGRAS)

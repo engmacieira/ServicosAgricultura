@@ -1,0 +1,33 @@
+name: Testes do Backend Python
+
+on:
+  push:
+    branches: [ "main" ] 
+  
+  pull_request:
+    branches: [ "main" ] 
+
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 3. Instalar dependências
+        run: |
+          pip install -r requirements.txt
+        working-directory: ./backend_api
+
+      - name: 4. Rodar os testes (Pytest)
+        run: pytest
+        working-directory: ./backend_api
