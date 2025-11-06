@@ -1,0 +1,49 @@
+# .github/workflows/frontend-ci.yml
+
+name: Frontend CI (Jest Tests)
+
+on:
+  # Roda este workflow em pushes para as branches main ou master
+  push:
+    branches: [ main, master ]
+    # Otimização: Só roda se houver mudanças dentro da pasta frontend_desktop
+    paths:
+      - 'frontend_desktop/**'
+      
+  # Roda também em Pull Requests para as branches main ou master
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'frontend_desktop/**'
+
+jobs:
+  test-frontend:
+    # A máquina virtual que o GitHub vai usar
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Passo para "baixar" o código do seu repositório para a VM
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Passo para instalar a versão correta do Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Vamos usar a versão 20 (LTS - Long Term Support), que é moderna e estável
+          node-version: '20'
+          # Adiciona cache para o 'npm', acelera futuras instalações
+          cache: 'npm'
+          cache-dependency-path: frontend_desktop/package-lock.json
+
+      # 3. Passo para instalar as dependências (jest, babel, etc.)
+      - name: Install dependencies
+        # Define o diretório de trabalho correto!
+        run: npm install
+        working-directory: ./frontend_desktop
+
+      # 4. Passo para rodar os nossos 6 testes
+      - name: Run Jest tests
+        # Roda o script 'test' do nosso package.json
+        run: npm test
+        working-directory: ./frontend_desktop
