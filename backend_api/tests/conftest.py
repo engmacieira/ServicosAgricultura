@@ -4,7 +4,7 @@ import os
 from app.core import database 
 import database_setup
 
-TEST_DB_PATH = 'test_gestao.db'
+TEST_DB_PATH = 'test_gestao2.db'
 
 @pytest.fixture
 def setup_test_db(monkeypatch):

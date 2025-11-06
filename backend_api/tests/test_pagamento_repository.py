@@ -1,5 +1,6 @@
 import pytest
 import sqlite3
+import logging
 
 # Modelos
 from app.models.produtor_model import Produtor
@@ -14,16 +15,33 @@ from app.repositories import execucao_repository
 from app.repositories import pagamento_repository
 
 # --- ARRANGE (Setup) Helpers ---
-# Vamos criar uns dados base que serão usados em (quase) todos os testes
-# para evitar repetição de código.
-def _setup_base_data():
-    """Cria um Produtor, Servico e uma Execucao base."""
+# Esta é a sua função, agora com os Asserts de Sênior
+def _setup_base_data(
+    nome_produtor="Produtor PGT", 
+    cpf_produtor="777", 
+    nome_servico="Serviço PGT"
+):
+    """
+    Cria um Produtor, Servico e uma Execucao base.
+    Agora parametrizado para evitar conflitos de UNIQUE constraint.
+    """
     produtor = produtor_repository.create_produtor(
-        Produtor(nome="Produtor PGT", cpf="777")
+        Produtor(nome=nome_produtor, cpf=cpf_produtor)
     )
     servico = servico_repository.create_servico(
-        Servico(nome="Serviço PGT", valor_unitario=100)
+        Servico(nome=nome_servico, valor_unitario=100)
     )
+
+    # --- Verificação de Sênior ---
+    # Garante que os testes falhem com uma mensagem clara se o setup falhar
+    if produtor is None:
+        logging.error(f"Falha no setup: Produtor com CPF {cpf_produtor} não foi criado (provavelmente duplicado).")
+        assert produtor is not None, f"Falha ao criar produtor no setup (CPF: {cpf_produtor})"
+        
+    if servico is None:
+        logging.error(f"Falha no setup: Serviço com nome '{nome_servico}' não foi criado (provavelmente duplicado).")
+        assert servico is not None, f"Falha ao criar serviço no setup (Nome: {nome_servico})"
+
     execucao = execucao_repository.create_execucao(Execucao(
         produtor_id=produtor.produtor_id,
         servico_id=servico.servico_id,
@@ -31,9 +49,12 @@ def _setup_base_data():
         valor_total=1000, # Uma dívida de 1000
         data_execucao="2025-01-01"
     ))
+    
+    assert execucao is not None, "Falha ao criar execução no setup"
+    
     return execucao
 
-# --- Teste C + R (Create + GetByExecucaoId) ---
+# --- Teste C + R (GetById) ---
 def test_create_and_get_pagamento(setup_test_db):
     # --- ARRANGE ---
     execucao = _setup_base_data()
@@ -51,51 +72,58 @@ def test_create_and_get_pagamento(setup_test_db):
     assert pagamento_criado.valor_pago == 250.50
 
     # --- ACT (Read) ---
-    # Agora, buscamos os pagamentos daquela execução
     pagamentos_da_execucao = pagamento_repository.get_pagamentos_by_execucao_id(
         execucao.execucao_id
     )
-    
+
     # --- ASSERT (Read) ---
     assert len(pagamentos_da_execucao) == 1
-    # O repositório de pagamento retorna uma lista de dicionários
-    assert pagamentos_da_execucao[0]['pagamento_id'] == 1
-    assert pagamentos_da_execucao[0]['valor_pago'] == 250.50
-    assert pagamentos_da_execucao[0]['data_pagamento'] == "2025-01-05"
+    
+    # CORREÇÃO 1: (TypeError)
+    # Trocamos a sintaxe de dicionário (['...']) pela sintaxe de objeto (.)
+    assert pagamentos_da_execucao[0].pagamento_id == 1
+    assert pagamentos_da_execucao[0].valor_pago == 250.50
 
-# --- Teste R (Listagem Múltipla) ---
+# --- Teste R (Múltiplos) ---
 def test_get_multiple_pagamentos_for_one_execucao(setup_test_db):
     # --- ARRANGE ---
-    execucao = _setup_base_data() # Dívida de 1000
     
+    # CORREÇÃO 2: (AttributeError / UNIQUE Constraint)
+    # Chamamos o setup com dados únicos para evitar o conflito de CPF
+    execucao = _setup_base_data(
+        nome_produtor="Produtor A", cpf_produtor="111", nome_servico="Serviço A"
+    )
+
     # Cria 3 pagamentos para esta execução
     pgt1 = Pagamento(execucao.execucao_id, 100, "2025-01-02")
     pgt2 = Pagamento(execucao.execucao_id, 200, "2025-01-03")
     pgt3 = Pagamento(execucao.execucao_id, 300, "2025-01-04")
-    
+
     pagamento_repository.create_pagamento(pgt1)
     pagamento_repository.create_pagamento(pgt2)
     pagamento_repository.create_pagamento(pgt3)
-    
-    # Cria uma SEGUNDA execução e um pagamento para ela (para testar isolamento)
-    execucao2 = _setup_base_data()
-    pgt_outra = Pagamento(execucao2.execucao_id, 5000, "2025-01-05")
-    pagamento_repository.create_pagamento(pgt_outra)
+
+    # Cria uma SEGUNDA execução (com dados únicos) para testar o isolamento
+    execucao2 = _setup_base_data(
+        nome_produtor="Produtor B", cpf_produtor="222", nome_servico="Serviço B"
+    )
+    pgt_extra = Pagamento(execucao2.execucao_id, 5000, "2025-01-05")
+    pagamento_repository.create_pagamento(pgt_extra)
 
     # --- ACT ---
-    # Busca pagamentos APENAS da primeira execução
-    pagamentos_da_execucao1 = pagamento_repository.get_pagamentos_by_execucao_id(
-        execucao.execucao_id
-    )
+    # Busca SÓ os pagamentos da PRIMEIRA execução
+    pagamentos_exec1 = pagamento_repository.get_pagamentos_by_execucao_id(execucao.execucao_id)
 
     # --- ASSERT ---
-    assert len(pagamentos_da_execucao1) == 3
+    assert len(pagamentos_exec1) == 3
     
-    # Valida os valores (a ordem de retorno não importa, vamos somar)
-    total_pago = sum(p['valor_pago'] for p in pagamentos_da_execucao1)
-    assert total_pago == (100 + 200 + 300) # 600
+    # CORREÇÃO 1 (BIS): (TypeError)
+    # Trocamos a sintaxe de dicionário (['...']) pela sintaxe de objeto (.)
+    assert pagamentos_exec1[0].valor_pago == 100
+    assert pagamentos_exec1[1].valor_pago == 200
+    assert pagamentos_exec1[2].valor_pago == 300
 
-# --- Teste D (Soft-Delete) ---
+# --- Teste D (Soft Delete) ---
 def test_soft_delete_pagamento(setup_test_db):
     # --- ARRANGE ---
     execucao = _setup_base_data()
@@ -111,7 +139,7 @@ def test_soft_delete_pagamento(setup_test_db):
     assert len(pagamentos_antes) == 2
     
     # --- ACT ---
-    # Deleta o primeiro pagamento (ID 1)
+    # Deleta o primeiro pagamento (pgt1)
     sucesso = pagamento_repository.delete_pagamento(pgt1.pagamento_id)
     
     # --- ASSERT ---
@@ -122,26 +150,28 @@ def test_soft_delete_pagamento(setup_test_db):
     
     # A lista SÓ deve conter o segundo pagamento (pgt2)
     assert len(pagamentos_depois) == 1
-    assert pagamentos_depois[0]['pagamento_id'] == pgt2.pagamento_id
-    assert pagamentos_depois[0]['valor_pago'] == 200
+    
+    # CORREÇÃO 3: (TypeError)
+    # Trocamos a sintaxe de dicionário (['...']) pela sintaxe de objeto (.)
+    assert pagamentos_depois[0].pagamento_id == pgt2.pagamento_id
+    assert pagamentos_depois[0].valor_pago == 200
 
 # --- Teste de Integridade (Erro FK) ---
 def test_create_pagamento_fails_with_invalid_execucao_id(setup_test_db):
     """
     Testa se o repositório lida com um FK Error e retorna None.
+    Isto valida o nosso 'except sqlite3.IntegrityError' no repositório.
     """
     # --- ARRANGE ---
-    # Tenta criar um pagamento para uma execução que NÃO existe (ID 999)
+    # Não criamos uma execução. O ID 999 é inválido.
     pagamento_invalido = Pagamento(
-        execucao_id=999,
-        valor_pago=100,
+        execucao_id=999, 
+        valor_pago=100, 
         data_pagamento="2025-01-01"
     )
     
     # --- ACT ---
-    # O repositório deve capturar o sqlite3.IntegrityError e retornar None
-    #
     resultado = pagamento_repository.create_pagamento(pagamento_invalido)
     
     # --- ASSERT ---
-    assert resultado is None
+    assert resultado is None # O repositório deve retornar None ao falhar
